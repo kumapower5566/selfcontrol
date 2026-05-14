@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>你能行 - 专注时钟</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: white;
+      font-size: 2rem;
+      margin: 20px 0 30px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* 专注时钟 */
+    .timer-display {
+      text-align: center;
+      padding: 30px 0;
+    }
+    
+    .timer-time {
+      font-size: 4rem;
+      font-weight: 700;
+      color: #333;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .timer-status {
+      font-size: 1rem;
+      color: #888;
+      margin-top: 8px;
+    }
+    
+    .timer-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .timer-presets {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    
+    .preset-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      background: white;
+      color: #666;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    
+    .preset-btn:hover, .preset-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    /* 今日任务 */
+    .task-input-wrap {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .task-input {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .task-input:focus {
+      border-color: #667eea;
+    }
+    
+    .add-btn {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      background: #667eea;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .task-list {
+      list-style: none;
+    }
+    
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      transition: all 0.2s;
+    }
+    
+    .task-item.completed {
+      background: #e8f5e9;
+    }
+    
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: #888;
+    }
+    
+    .task-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #667eea;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .task-item.completed .task-checkbox {
+      background: #667eea;
+      color: white;
+    }
+    
+    .task-text {
+      flex: 1;
+      font-size: 1rem;
+    }
+    
+    .task-delete {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 4px 8px;
+    }
+    
+    .task-delete:hover {
+      color: #ff5252;
+    }
+    
+    /* 日历打卡 */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .calendar-month {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .calendar-nav button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    
+    .calendar-day-name {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #888;
+      padding: 8px 0;
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .calendar-day:hover {
+      background: #f0f0f0;
+    }
+    
+    .calendar-day.today {
+      font-weight: 700;
+      color: #667eea;
+    }
+    
+    .calendar-day.checked {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    
+    .calendar-day.empty {
+      cursor: default;
+    }
+    
+    /* 心情记录 */
+    .mood-selector {
+      display: flex;
+      justify-content: space-around;
+      gap: 12px;
+    }
+    
+    .mood-btn {
+      flex: 1;
+      padding: 16px 8px;
+      border-radius: 16px;
+      border: 2px solid #eee;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    
+    .mood-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .mood-btn.selected {
+      border-color: #667eea;
+      background: linear-gradient(135deg, #667eea15, #764ba215);
+    }
+    
+    .mood-emoji {
+      font-size: 2rem;
+      margin-bottom: 4px;
+    }
+    
+    .mood-label {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    
+    /* 统计 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea15, #764ba215);
+      border-radius: 16px;
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>你能行</h1>
+    
+    <!-- 专注时钟 -->
+    <div class="card">
+      <div class="card-title">⏱️ 专注时钟</div>
+      <div class="timer-display">
+        <div class="timer-time" id="timerDisplay">25:00</div>
+        <div class="timer-status" id="timerStatus">准备开始</div>
+      </div>
+      <div class="timer-presets">
+        <button class="preset-btn active" data-minutes="25">25分钟</button>
+        <button class="preset-btn" data-minutes="45">45分钟</button>
+        <button class="preset-btn" data-minutes="60">60分钟</button>
+      </div>
+      <div class="timer-buttons">
+        <button class="btn btn-primary" id="startBtn">开始</button>
+        <button class="btn btn-secondary" id="resetBtn">重置</button>
+      </div>
+    </div>
+    
+    <!-- 今日任务 -->
+    <div class="card">
+      <div class="card-title">✅ 今日任务</div>
+      <div class="task-input-wrap">
+        <input type="text" class="task-input" id="taskInput" placeholder="添加新任务...">
+        <button class="add-btn" id="addTaskBtn">添加</button>
+      </div>
+      <ul class="task-list" id="taskList"></ul>
+    </div>
+    
+    <!-- 打卡日历 -->
+    <div class="card">
+      <div class="card-title">📅 打卡日历</div>
+      <div class="calendar-header">
+        <span class="calendar-month" id="calendarMonth"></span>
+        <div class="calendar-nav">
+          <button id="prevMonth">‹</button>
+          <button id="nextMonth">›</button>
+        </div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    
+    <!-- 心情记录 -->
+    <div class="card">
+      <div class="card-title">😊 今天心情</div>
+      <div class="mood-selector" id="moodSelector">
+        <div class="mood-btn" data-mood="terrible">😫<div class="mood-label">很差</div></div>
+        <div class="mood-btn" data-mood="bad">😔<div class="mood-label">较差</div></div>
+        <div class="mood-btn" data-mood="normal">😐<div class="mood-label">一般</div></div>
+        <div class="mood-btn" data-mood="good">🙂<div class="mood-label">不错</div></div>
+        <div class="mood-btn" data-mood="great">😄<div class="mood-label">超棒</div></div>
+      </div>
+    </div>
+    
+    <!-- 统计 -->
+    <div class="card">
+      <div class="card-title">📊 本周统计</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="totalFocus">0</div>
+          <div class="stat-label">专注(分钟)</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="completedTasks">0</div>
+          <div class="stat-label">完成任务</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="checkInDays">0</div>
+          <div class="stat-label">打卡天数</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 数据存储
+    const DATA_KEY = 'focus_clock_data';
+    
+    function loadData() {
+      const data = localStorage.getItem(DATA_KEY);
+      return data ? JSON.parse(data) : {
+        tasks: [],
+        checkins: {},
+        moods: {},
+        focusMinutes: 0,
+        focusLogs: []
+      };
+    }
+    
+    function saveData(data) {
+      localStorage.setItem(DATA_KEY, JSON.stringify(data));
+    }
+    
+    // 计时器
+    let timerInterval = null;
+    let remainingSeconds = 25 * 60;
+    let isRunning = false;
+    let currentPreset = 25;
+    
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerStatus = document.getElementById('timerStatus');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    function updateTimerDisplay() {
+      timerDisplay.textContent = formatTime(remainingSeconds);
+    }
+    
+    function startTimer() {
+      if (isRunning) {
+        // 暂停
+        clearInterval(timerInterval);
+        isRunning = false;
+        startBtn.textContent = '继续';
+        timerStatus.textContent = '已暂停';
+      } else {
+        // 开始
+        isRunning = true;
+        startBtn.textContent = '暂停';
+        timerStatus.textContent = '专注中...';
+        
+        const startTime = Date.now();
+        const initialSeconds = remainingSeconds;
+        
+        timerInterval = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          remainingSeconds = Math.max(0, initialSeconds - elapsed);
+          updateTimerDisplay();
+          
+          if (remainingSeconds === 0) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            startBtn.textContent = '开始';
+            timerStatus.textContent = '太棒了！';
+            
+            // 记录专注时间
+            const data = loadData();
+            data.focusMinutes += currentPreset;
+            data.focusLogs.push({
+              date: new Date().toISOString().split('T')[0],
+              minutes: currentPreset
+            });
+            saveData(data);
+            updateStats();
+          }
+        }, 1000);
+      }
+    }
+    
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      remainingSeconds = currentPreset * 60;
+      updateTimerDisplay();
+      startBtn.textContent = '开始';
+      timerStatus.textContent = '准备开始';
+    }
+    
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        presetBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPreset = parseInt(btn.dataset.minutes);
+        resetTimer();
+      });
+    });
+    
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    
+    // 任务管理
+    const taskInput = document.getElementById('taskInput');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const taskList = document.getElementById('taskList');
+    
+    function renderTasks() {
+      const data = loadData();
+      if (data.tasks.length === 0) {
+        taskList.innerHTML = '<div class="empty-state">还没有任务，添加一个吧</div>';
+        return;
+      }
+      
+      taskList.innerHTML = data.tasks.map((task, index) => `
+        <li class="task-item ${task.completed ? 'completed' : ''}">
+          <div class="task-checkbox" onclick="toggleTask(${index})">${task.completed ? '✓' : ''}</div>
+          <span class="task-text">${task.text}</span>
+          <button class="task-delete" onclick="deleteTask(${index})">×</button>
+        </li>
+      `).join('');
+    }
+    
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (!text) return;
+      
+      const data = loadData();
+      data.tasks.push({ text, completed: false });
+      saveData(data);
+      taskInput.value = '';
+      renderTasks();
+      updateStats();
+    }
+    
+    window.toggleTask = function(index) {
+      const data = loadData();
+      data.tasks[index].completed = !data.tasks[index].completed;
+      saveData(data);
+      renderTasks();
+      updateStats();
+    };
+    
+    window.deleteTask = function(index) {
+      const data = loadData();
+      data.tasks.splice(index, 1);
+      saveData(data);
+      renderTasks();
+      updateStats();
+    };
+    
+    addTaskBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') addTask();
+    });
+    
+    // 日历
+    let currentMonth = new Date();
+    
+    const calendarMonth = document.getElementById('calendarMonth');
+    const calendarGrid = document.getElementById('calendarGrid');
+    
+    function renderCalendar() {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const today = new Date();
+      
+      calendarMonth.textContent = `${year}年 ${month + 1}月`;
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      const data = loadData();
+      
+      let html = '';
+      ['日', '一', '二', '三', '四', '五', '六'].forEach(d => {
+        html += `<div class="calendar-day-name">${d}</div>`;
+      });
+      
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-day empty"></div>';
+      }
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isToday = dateStr === todayStr;
+        const isChecked = data.checkins[dateStr];
+        const isFuture = new Date(dateStr) > today;
+        
+        let classes = 'calendar-day';
+        if (isToday) classes += ' today';
+        if (isChecked) classes += ' checked';
+        if (isFuture) classes += ' empty';
+        
+        const clickHandler = !isFuture && !isChecked ? `onclick="toggleCheckin('${dateStr}')"` : '';
+        
+        html += `<div class="${classes}" ${clickHandler}>${d}</div>`;
+      }
+      
+      calendarGrid.innerHTML = html;
+    }
+    
+    window.toggleCheckin = function(dateStr) {
+      const data = loadData();
+      data.checkins[dateStr] = !data.checkins[dateStr];
+      saveData(data);
+      renderCalendar();
+      updateStats();
+    };
+    
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      renderCalendar();
+    });
+    
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      renderCalendar();
+    });
+    
+    // 心情
+    const moodBtns = document.querySelectorAll('.mood-btn');
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    function renderMood() {
+      const data = loadData();
+      const currentMood = data.moods[todayStr];
+      
+      moodBtns.forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.mood === currentMood);
+      });
+    }
+    
+    moodBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mood = btn.dataset.mood;
+        const data = loadData();
+        data.moods[todayStr] = mood;
+        saveData(data);
+        renderMood();
+      });
+    });
+    
+    // 统计
+    function updateStats() {
+      const data = loadData();
+      
+      // 本周专注时间
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekMinutes = data.focusLogs
+        .filter(log => new Date(log.date) >= weekStart)
+        .reduce((sum, log) => sum + log.minutes, 0);
+      
+      // 完成任务数
+      const completedCount = data.tasks.filter(t => t.completed).length;
+      
+      // 打卡天数
+      const checkinDays = Object.keys(data.checkins).length;
+      
+      document.getElementById('totalFocus').textContent = weekMinutes;
+      document.getElementById('completedTasks').textContent = completedCount;
+      document.getElementById('checkInDays').textContent = checkinDays;
+    }
+    
+    // 初始化
+    updateTimerDisplay();
+    renderTasks();
+    renderCalendar();
+    renderMood();
+    updateStats();
+  </script>
+</body>
+</html>
