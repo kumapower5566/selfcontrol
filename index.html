@@ -222,8 +222,8 @@
     </div>
     <div class="card">
       <div class="card-title">☁️ 数据同步</div>
-      <div class="sync-hint">输入 GitHub Token，一键同步所有数据到云端。换设备也不怕丢。</div>
-      <button class="sync-btn" id="syncBtn">☁️ 同步数据</button>
+      <div class="sync-hint" id="syncHint">设定一个简短密钥（如 ABC123），以后输入密钥就能同步。换设备也不怕丢。</div>
+      <div id="syncSetupArea"></div>
       <div id="syncResult"></div>
     </div>
   </div>
@@ -266,6 +266,22 @@
     </div>
   </div>
 
+  <!-- 密钥设置弹窗 -->
+  <div class="modal-overlay" id="syncSetupModal">
+    <div class="modal">
+      <div class="modal-title">🔑 设置同步密钥</div>
+      <div class="modal-sub">首次使用需要绑定 GitHub Token</div>
+      <input type="text" class="sync-input" id="syncPinInput" placeholder="设置简短密钥，如 ABC123" maxlength="8" style="ime-mode:disabled">
+      <input type="password" class="sync-input" id="syncTokenInput" placeholder="粘贴 GitHub Token（ghp_xxx）">
+      <div class="sync-hint">密钥用于快速同步，Token 只存本地，不会上传。</div>
+      <div id="syncSetupResult"></div>
+      <div class="modal-btns">
+        <button class="btn-skip" onclick="closeSyncSetupModal()">取消</button>
+        <button class="btn-confirm" onclick="saveSyncSetup()">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // 顶部日期
     function updateHeaderDate() {
@@ -287,7 +303,7 @@
         document.getElementById('page-' + t).classList.add('active');
         if (t === 'calendar') renderCalendar();
         if (t === 'mood') renderMood();
-        if (t === 'stats') updateStats();
+        if (t === 'stats') { updateStats(); renderSyncUI(); }
         if (t === 'task') renderTasks();
         if (t === 'goal') renderGoals();
         if (t === 'timer') renderTodayFocusLogs();
@@ -536,34 +552,84 @@
 
     // 同步
     const GIST_FILE = 'nengixing-data.json';
-    document.getElementById('syncBtn').addEventListener('click', () => {
-      document.getElementById('tokenInput').value = localStorage.getItem('nengixing_gh_token') || '';
+    function renderSyncUI() {
+      const area = document.getElementById('syncSetupArea');
+      const hint = document.getElementById('syncHint');
+      const savedPin = localStorage.getItem('nengixing_pin');
+      if (savedPin) {
+        hint.textContent = `已设置密钥：${savedPin}。点击下方按钮同步数据。`;
+        area.innerHTML = `<button class="sync-btn" id="syncBtn">☁️ 同步数据</button><button class="sync-btn" id="changePinBtn" style="margin-top:8px;background:linear-gradient(135deg,#e0e0e0,#c0c0c0);color:#555">🔑 更换密钥</button>`;
+        document.getElementById('syncBtn').addEventListener('click', openSyncByPin);
+        document.getElementById('changePinBtn').addEventListener('click', openSyncSetup);
+      } else {
+        hint.textContent = '设定一个简短密钥（如 ABC123），以后输入密钥就能同步。换设备也不怕丢。';
+        area.innerHTML = `<button class="sync-btn" id="syncBtn" onclick="openSyncSetup()">🔑 设置同步密钥</button>`;
+      }
+    }
+    function openSyncByPin() {
+      document.getElementById('tokenInput').value = '';
       document.getElementById('syncResult2').innerHTML = '';
       document.getElementById('syncModal').classList.add('show');
-    });
+    }
+    function openSyncSetup() {
+      document.getElementById('syncPinInput').value = localStorage.getItem('nengixing_pin') || '';
+      document.getElementById('syncTokenInput').value = localStorage.getItem('nengixing_gh_token') || '';
+      document.getElementById('syncSetupResult').innerHTML = '';
+      document.getElementById('syncSetupModal').classList.add('show');
+    }
     function closeSyncModal() { document.getElementById('syncModal').classList.remove('show'); }
+    function closeSyncSetupModal() { document.getElementById('syncSetupModal').classList.remove('show'); }
     async function doSync() {
       const token = document.getElementById('tokenInput').value.trim();
-      if (!token) { alert('请输入 Token'); return; }
+      if (!token) { alert('请输入密钥'); return; }
       const resultEl = document.getElementById('syncResult2');
+      // 如果是密钥，从存储中取 Token
+      let actualToken = token;
+      if (token !== localStorage.getItem('nengixing_gh_token')) {
+        const savedPin = localStorage.getItem('nengixing_pin');
+        if (token === savedPin && savedPin) {
+          actualToken = localStorage.getItem('nengixing_gh_token') || '';
+          if (!actualToken) { resultEl.innerHTML = `<div class="sync-result error">❌ 未找到绑定的 Token，请重新设置密钥</div>`; return; }
+        } else {
+          resultEl.innerHTML = `<div class="sync-result error">❌ 密钥错误，请检查后重试</div>`; return; }
+      }
       resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
       try {
         const localData = loadData();
         const payload = JSON.stringify(localData, null, 2);
         const gistId = localStorage.getItem('nengixing_gist_id');
         if (gistId) {
-          const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
+          const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${actualToken}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
           existing.files[GIST_FILE] = { content: payload };
-          await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
+          await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${actualToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
         } else {
-          const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
+          const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${actualToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
           if (!res.id) throw new Error(res.message || '创建失败');
           localStorage.setItem('nengixing_gist_id', res.id);
         }
-        localStorage.setItem('nengixing_gh_token', token);
+        localStorage.setItem('nengixing_gh_token', actualToken);
         resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！数据已保存到云端</div>';
       } catch(err) {
         resultEl.innerHTML = `<div class="sync-result error">❌ 同步失败：${err.message}</div>`;
+      }
+    }
+    async function saveSyncSetup() {
+      const pin = document.getElementById('syncPinInput').value.trim();
+      const token = document.getElementById('syncTokenInput').value.trim();
+      const resultEl = document.getElementById('syncSetupResult');
+      if (!pin || pin.length < 3) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥至少3位</div>`; return; }
+      if (!token || !token.startsWith('ghp_')) { resultEl.innerHTML = `<div class="sync-result error">❌ 请输入正确的 GitHub Token</div>`; return; }
+      resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在验证 Token...</div>';
+      try {
+        // 验证 Token 有效
+        await fetch('https://api.github.com/gists', { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => { if (!r.ok) throw new Error('Token 无效'); return r.json(); });
+        localStorage.setItem('nengixing_pin', pin);
+        localStorage.setItem('nengixing_gh_token', token);
+        // 保留gistId不重置，已绑定的数据继续用
+        resultEl.innerHTML = '<div class="sync-result success">✅ 密钥设置成功！以后输入 <b>' + pin + '</b> 即可同步</div>';
+        setTimeout(() => { closeSyncSetupModal(); renderSyncUI(); }, 1200);
+      } catch(err) {
+        resultEl.innerHTML = `<div class="sync-result error">❌ Token 无效：${err.message}</div>`;
       }
     }
 
@@ -575,6 +641,7 @@
     updateStats();
     renderGoals();
     renderTodayFocusLogs();
+    renderSyncUI();
   </script>
 </body>
 </html>
