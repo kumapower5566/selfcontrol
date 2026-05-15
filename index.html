@@ -60,6 +60,20 @@
     .task-start-btn:active { transform: scale(0.9); }
     .task-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.4rem; padding: 4px 6px; transition: color 0.2s; flex-shrink: 0; line-height: 1; }
     .task-delete:active { color: #ff5252; }
+    /* 每日固定项目 */
+    .daily-fixed { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); border-radius: 20px; padding: 16px; margin-bottom: 16px; border: 2px solid rgba(102,126,234,0.15); }
+    .daily-fixed-title { font-size: 0.82rem; font-weight: 600; color: #667eea; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .daily-fixed-title .progress { font-size: 0.78rem; color: #999; font-weight: 500; }
+    .daily-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; margin-bottom: 8px; background: white; transition: all 0.2s; cursor: pointer; }
+    .daily-item:active { transform: scale(0.98); }
+    .daily-item.completed { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); }
+    .daily-item.completed .daily-item-text { text-decoration: line-through; color: #999; }
+    .daily-item.completed .daily-item-time { color: #999; }
+    .daily-item-checkbox { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: white; flex-shrink: 0; transition: all 0.2s; }
+    .daily-item.completed .daily-item-checkbox { background: #4caf50; border-color: #4caf50; }
+    .daily-item-text { flex: 1; font-size: 0.95rem; color: #444; }
+    .daily-item-time { font-size: 0.78rem; color: #667eea; font-weight: 600; flex-shrink: 0; }
+    /* 打卡日历 */
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .calendar-month { font-size: 1.1rem; font-weight: 600; color: #333; }
     .calendar-nav { display: flex; gap: 8px; }
@@ -72,33 +86,23 @@
     .calendar-day.checked { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; }
     .calendar-day.empty { cursor: default; }
     .calendar-day.future { color: #ccc; cursor: not-allowed; }
-    .auto-badge { display: inline-block; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
-    .mood-selector { display: flex; justify-content: space-around; gap: 6px; }
-    .mood-btn { flex: 1; padding: 14px 4px; border-radius: 16px; border: 2px solid transparent; background: #faf9fb; cursor: pointer; transition: all 0.25s ease; text-align: center; }
-    .mood-btn.selected { border-color: #fcb69f; background: linear-gradient(135deg, #fff5f0 0%, #ffe4d6 100%); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(252, 182, 159, 0.3); }
-    .mood-emoji { font-size: 1.8rem; margin-bottom: 4px; display: block; }
-    .mood-label { font-size: 0.72rem; color: #999; }
+    /* 统计 */
     .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card .card-title { color: rgba(255,255,255,0.75); }
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .stat-item { text-align: center; padding: 16px 6px; background: rgba(255,255,255,0.15); border-radius: 16px; backdrop-filter: blur(10px); }
     .stat-value { font-size: 2rem; font-weight: 700; color: white; }
     .stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.8); margin-top: 4px; }
-    .goal-item { display: flex; align-items: center; gap: 12px; padding: 14px 14px; border-radius: 16px; margin-bottom: 10px; background: #faf9fb; transition: all 0.2s; }
-    .goal-item.completed { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); }
-    .goal-item.completed .goal-text { text-decoration: line-through; color: #999; }
-    .goal-checkbox { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ddd; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white; flex-shrink: 0; transition: all 0.2s; }
-    .goal-item.completed .goal-checkbox { background: #4caf50; border-color: #4caf50; }
-    .goal-text { flex: 1; font-size: 0.97rem; color: #444; min-width: 0; word-break: break-word; }
-    .goal-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.4rem; padding: 4px 6px; transition: color 0.2s; flex-shrink: 0; line-height: 1; }
-    .goal-delete:active { color: #ff5252; }
-    .goal-input-wrap { position: relative; margin-bottom: 16px; width: 100%; }
-    .goal-input { width: 100%; padding: 14px 56px 14px 16px; border-radius: 16px; border: 2px solid #f0f0f0; font-size: 1rem; outline: none; transition: border-color 0.2s; font-family: inherit; }
-    .goal-input:focus { border-color: #667eea; }
-    .add-goal-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 12px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; cursor: pointer; font-size: 1.3rem; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
-    .add-goal-btn:active { transform: translateY(-50%) scale(0.92); }
-    .goal-hint { font-size: 0.8rem; color: #aaa; text-align: center; margin-top: 8px; }
-    .goal-progress { font-size: 0.85rem; color: #667eea; font-weight: 600; text-align: center; margin-top: 10px; }
+    .rate-bar-wrap { margin: 16px 0 4px; }
+    .rate-bar-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: #999; margin-bottom: 6px; }
+    .rate-bar { height: 8px; border-radius: 4px; background: #eee; overflow: hidden; }
+    .rate-bar-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.5s ease; }
+    .task-history { margin-top: 16px; }
+    .task-history-title { font-size: 0.82rem; font-weight: 600; color: #999; margin-bottom: 10px; }
+    .task-history-list { display: flex; flex-direction: column; gap: 6px; }
+    .history-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #faf9fb; border-radius: 12px; font-size: 0.88rem; color: #555; }
+    .history-item .hi-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; flex-shrink: 0; }
+    .history-item .hi-time { font-size: 0.75rem; color: #999; margin-left: auto; flex-shrink: 0; }
     .sync-btn { width: 100%; padding: 14px; border-radius: 16px; border: none; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #6a5a4a; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.25s; font-family: inherit; margin-top: 12px; }
     .sync-btn:active { transform: scale(0.97); }
     .sync-hint { font-size: 0.78rem; color: #bbb; margin-bottom: 16px; line-height: 1.5; }
@@ -119,10 +123,7 @@
     .sync-result { font-size: 0.85rem; text-align: center; margin-top: 10px; padding: 10px; border-radius: 12px; }
     .sync-result.success { background: #e8f5e9; color: #2e7d32; }
     .sync-result.error { background: #ffebee; color: #c62828; }
-    .empty-state { text-align: center; padding: 24px; color: #bbb; font-size: 0.9rem; }
-    .focus-log-item { background: #faf9fb; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
-    .focus-log-time { font-size: 0.8rem; color: #667eea; font-weight: 600; }
-    .focus-log-note { font-size: 0.9rem; color: #555; line-height: 1.4; margin-top: 4px; }
+    .empty-state { text-align: center; padding: 20px; color: #bbb; font-size: 0.9rem; }
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: rgba(255,255,255,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.06); display: flex; align-items: stretch; z-index: 999; padding-bottom: env(safe-area-inset-bottom); }
     .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; gap: 4px; border: none; background: none; padding: 8px 0 0; font-family: inherit; position: relative; }
     .nav-item:active { transform: scale(0.92); }
@@ -139,9 +140,9 @@
     <p id="headerDate"></p>
   </div>
 
-  <!-- 专注（计时器+任务） -->
+  <!-- 专注 -->
   <div class="page active" id="page-timer">
-    <div class="card timer-card" id="timerCard">
+    <div class="card timer-card">
       <div class="timer-task-label" id="timerTaskLabel">选择一个任务开始计时</div>
       <div class="timer-display">
         <div class="timer-time" id="timerDisplay">25:00</div>
@@ -158,6 +159,17 @@
         <button class="btn btn-danger" id="endBtn" style="display:none">结束</button>
       </div>
     </div>
+
+    <!-- 每日固定项目 -->
+    <div class="daily-fixed" id="dailyFixed">
+      <div class="daily-fixed-title">
+        <span>🎯 每日必做</span>
+        <span class="progress" id="dailyFixedProgress">0/3</span>
+      </div>
+      <div id="dailyFixedList"></div>
+    </div>
+
+    <!-- 今日任务 -->
     <div class="card">
       <div class="card-title">📋 今日任务</div>
       <div class="task-input-wrap">
@@ -168,24 +180,10 @@
     </div>
   </div>
 
-  <!-- 目标 -->
-  <div class="page" id="page-goal">
-    <div class="card">
-      <div class="card-title">🎯 今日核心目标</div>
-      <div class="goal-input-wrap">
-        <input type="text" class="goal-input" id="goalInput" placeholder="今天最重要的3件事...">
-        <button class="add-goal-btn" id="addGoalBtn">+</button>
-      </div>
-      <ul class="task-list" id="goalList"></ul>
-      <div class="goal-hint">每天零点自动清空，重新设定新目标</div>
-      <div class="goal-progress" id="goalProgress"></div>
-    </div>
-  </div>
-
-  <!-- 日历 -->
+  <!-- 打卡 -->
   <div class="page" id="page-calendar">
     <div class="card">
-      <div class="card-title">📅 打卡日历 <span class="auto-badge">自动打卡</span></div>
+      <div class="card-title">📅 打卡日历 <span style="font-size:0.7rem;color:#667eea;font-weight:600">完成任务自动打卡</span></div>
       <div class="calendar-header">
         <span class="calendar-month" id="calendarMonth"></span>
         <div class="calendar-nav">
@@ -197,28 +195,25 @@
     </div>
   </div>
 
-  <!-- 心情 -->
-  <div class="page" id="page-mood">
-    <div class="card">
-      <div class="card-title">💕 今日心情</div>
-      <div class="mood-selector" id="moodSelector">
-        <div class="mood-btn" data-mood="terrible"><span class="mood-emoji">😫</span><div class="mood-label">很差</div></div>
-        <div class="mood-btn" data-mood="bad"><span class="mood-emoji">😔</span><div class="mood-label">较差</div></div>
-        <div class="mood-btn" data-mood="normal"><span class="mood-emoji">😐</span><div class="mood-label">一般</div></div>
-        <div class="mood-btn" data-mood="good"><span class="mood-emoji">🙂</span><div class="mood-label">不错</div></div>
-        <div class="mood-btn" data-mood="great"><span class="mood-emoji">😄</span><div class="mood-label">超棒</div></div>
-      </div>
-    </div>
-  </div>
-
   <!-- 统计 -->
   <div class="page" id="page-stats">
     <div class="card stats-card">
       <div class="card-title">✨ 本周成就</div>
       <div class="stats-grid">
-        <div class="stat-item"><div class="stat-value" id="totalFocus">0</div><div class="stat-label">专注(分钟)</div></div>
-        <div class="stat-item"><div class="stat-value" id="completedTasks">0</div><div class="stat-label">已完成</div></div>
+        <div class="stat-item"><div class="stat-value" id="totalFocus">0</div><div class="stat-label">已完成任务</div></div>
         <div class="stat-item"><div class="stat-value" id="checkInDays">0</div><div class="stat-label">打卡天数</div></div>
+        <div class="stat-item"><div class="stat-value" id="taskRate">0%</div><div class="stat-label">完成率</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 基础任务完成率</div>
+      <div class="rate-bar-wrap">
+        <div class="rate-bar-label"><span>每日必做</span><span id="dailyRateText">0/3</span></div>
+        <div class="rate-bar"><div class="rate-bar-fill" id="dailyRateFill" style="width:0%"></div></div>
+      </div>
+      <div class="task-history">
+        <div class="task-history-title">📝 已完成任务记录</div>
+        <div class="task-history-list" id="taskHistoryList"></div>
       </div>
     </div>
     <div class="card">
@@ -232,9 +227,7 @@
   <!-- 底部导航 -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-page="timer"><span class="nav-icon">⏱️</span><span class="nav-label">专注</span></button>
-    <button class="nav-item" data-page="goal"><span class="nav-icon">🎯</span><span class="nav-label">目标</span></button>
     <button class="nav-item" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">打卡</span></button>
-    <button class="nav-item" data-page="mood"><span class="nav-icon">💕</span><span class="nav-label">心情</span></button>
     <button class="nav-item" data-page="stats"><span class="nav-icon">✨</span><span class="nav-label">统计</span></button>
   </nav>
 
@@ -255,9 +248,8 @@
   <div class="modal-overlay" id="syncModal">
     <div class="modal">
       <div class="modal-title">☁️ 同步数据</div>
-      <div class="modal-sub">输入你的 GitHub Token</div>
-      <input type="password" class="sync-input" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
-      <div class="sync-hint">Token 存储在本地浏览器，用于访问你的 GitHub Gist 数据存储。</div>
+      <div class="modal-sub">输入密钥同步数据</div>
+      <input type="password" class="sync-input" id="tokenInput" placeholder="输入你的密钥">
       <div class="modal-btns">
         <button class="btn-skip" onclick="closeSyncModal()">取消</button>
         <button class="btn-confirm" onclick="doSync()">同步</button>
@@ -282,465 +274,479 @@
     </div>
   </div>
 
-  <script>
-    // 顶部日期
-    function updateHeaderDate() {
-      const now = new Date();
-      const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
-      document.getElementById('headerDate').textContent = `${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+<script>
+// ===== 常量 =====
+const DAILY_FIXED = [
+  { id: 'word', text: '英语单词', time: '30分钟', icon: '📖' },
+  { id: 'exercise', text: '英语习题', time: '30分钟', icon: '✏️' },
+  { id: 'skill', text: '软件/艺术积累', time: '30分钟', icon: '🎨' }
+];
+const DATA_KEY = 'focus_clock_data_v5';
+
+// ===== 顶部日期 =====
+function updateHeaderDate() {
+  const now = new Date();
+  const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+  document.getElementById('headerDate').textContent = `${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+}
+updateHeaderDate();
+
+// ===== 导航 =====
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const t = item.dataset.page;
+    navItems.forEach(n => n.classList.remove('active'));
+    pages.forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + t).classList.add('active');
+    if (t === 'calendar') renderCalendar();
+    if (t === 'stats') { updateStats(); renderSyncUI(); }
+    if (t === 'timer') { renderTasks(); renderDailyFixed(); updateTimerTaskLabel(); }
+  });
+});
+
+// ===== 数据 =====
+function loadData() {
+  const d = localStorage.getItem(DATA_KEY);
+  const def = { tasks: [], dailyFixed: {}, checkins: {}, history: [], dailyFixedDate: '' };
+  return d ? JSON.parse(d) : def;
+}
+function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
+
+// 零点重置每日固定项目
+function checkDailyReset() {
+  const today = new Date().toISOString().split('T')[0];
+  const data = loadData();
+  if (data.dailyFixedDate !== today) {
+    data.dailyFixed = {};
+    data.dailyFixedDate = today;
+    saveData(data);
+  }
+}
+
+// 自动打卡：完成任意任务或每日必做则打卡
+function autoCheckin() {
+  const today = new Date().toISOString().split('T')[0];
+  const data = loadData();
+  const hasTask = data.tasks.some(t => t.completed);
+  const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
+  if ((hasTask || dailyDone > 0) && !data.checkins[today]) {
+    data.checkins[today] = true;
+    saveData(data);
+    updateStats();
+  }
+}
+
+// ===== 计时器 =====
+let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
+let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
+let currentTaskIndex = -1;
+const timerDisplay = document.getElementById('timerDisplay');
+const timerStatus = document.getElementById('timerStatus');
+const timerTaskLabel = document.getElementById('timerTaskLabel');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const endBtn = document.getElementById('endBtn');
+const presetBtns = document.querySelectorAll('.preset-btn');
+
+function formatTime(s) { return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }
+function updateTimerDisplay() { timerDisplay.textContent = formatTime(remainingSeconds); }
+
+function updateTimerTaskLabel() {
+  if (currentTaskIndex >= 0) {
+    const data = loadData();
+    const task = data.tasks[currentTaskIndex];
+    if (task) {
+      timerTaskLabel.textContent = '🎯 ' + task.text;
+      timerTaskLabel.classList.add('active');
+      startBtn.disabled = false;
     }
-    updateHeaderDate();
+  } else {
+    timerTaskLabel.textContent = '选择一个任务开始计时';
+    timerTaskLabel.classList.remove('active');
+    startBtn.disabled = true;
+  }
+}
 
-    // 导航
-    const navItems = document.querySelectorAll('.nav-item');
-    const pages = document.querySelectorAll('.page');
-    navItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const t = item.dataset.page;
-        navItems.forEach(n => n.classList.remove('active'));
-        pages.forEach(p => p.classList.remove('active'));
-        item.classList.add('active');
-        document.getElementById('page-' + t).classList.add('active');
-        if (t === 'calendar') renderCalendar();
-        if (t === 'mood') renderMood();
-        if (t === 'stats') { updateStats(); renderSyncUI(); }
-        if (t === 'goal') renderGoals();
-        if (t === 'timer') { renderTasks(); updateTimerTaskLabel(); }
-      });
-    });
-
-    // 数据存储
-    const DATA_KEY = 'focus_clock_data_v4';
-    function loadData() {
-      const d = localStorage.getItem(DATA_KEY);
-      return d ? JSON.parse(d) : { tasks: [], goals: [], checkins: {}, moods: {}, goalsDate: '' };
-    }
-    function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
-
-    // 自动打卡
-    function autoCheckin() {
-      const data = loadData();
-      const today = new Date().toISOString().split('T')[0];
-      if (data.tasks.some(t => t.completed) && !data.checkins[today]) {
-        data.checkins[today] = true;
-        saveData(data);
-        updateStats();
-      }
-    }
-
-    // ========== 计时器 ==========
-    let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
-    let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
-    let currentTaskIndex = -1; // 当前正在计时的任务索引
-    const timerDisplay = document.getElementById('timerDisplay');
-    const timerStatus = document.getElementById('timerStatus');
-    const timerTaskLabel = document.getElementById('timerTaskLabel');
-    const startBtn = document.getElementById('startBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const endBtn = document.getElementById('endBtn');
-    const presetBtns = document.querySelectorAll('.preset-btn');
-
-    function formatTime(s) { return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }
-    function updateTimerDisplay() { timerDisplay.textContent = formatTime(remainingSeconds); }
-
-    function updateTimerTaskLabel() {
-      if (currentTaskIndex >= 0) {
-        const data = loadData();
-        const task = data.tasks[currentTaskIndex];
-        if (task) {
-          timerTaskLabel.textContent = '🎯 ' + task.text;
-          timerTaskLabel.classList.add('active');
-          startBtn.disabled = false;
-        }
-      } else {
-        timerTaskLabel.textContent = '选择一个任务开始计时';
-        timerTaskLabel.classList.remove('active');
-        startBtn.disabled = true;
-      }
-    }
-
-    function startTimer() {
-      if (currentTaskIndex < 0) return;
-      if (isRunning) {
-        // 暂停
-        clearInterval(timerInterval);
-        isRunning = false;
-        startBtn.textContent = '继续';
-        startBtn.className = 'btn btn-primary';
-        resetBtn.style.display = 'inline-block';
-        resetBtn.textContent = '取消';
-        timerStatus.textContent = '已暂停';
-        return;
-      }
-      isRunning = true;
-      startBtn.textContent = '暂停';
-      timerStatus.textContent = '专注中...';
-      resetBtn.style.display = 'inline-block';
-      resetBtn.textContent = '暂停';
-      endBtn.style.display = 'inline-block';
-      timerStartTime = Date.now();
-      timerInitialSeconds = remainingSeconds;
-      timerInterval = setInterval(() => {
-        remainingSeconds = Math.max(0, timerInitialSeconds - Math.floor((Date.now() - timerStartTime) / 1000));
-        updateTimerDisplay();
-        if (remainingSeconds === 0) {
-          clearInterval(timerInterval);
-          isRunning = false;
-          onTimerComplete(currentPreset, true);
-        }
-      }, 1000);
-    }
-
-    function resetTimer() {
+function startTimer() {
+  if (currentTaskIndex < 0) return;
+  if (isRunning) {
+    clearInterval(timerInterval);
+    isRunning = false;
+    startBtn.textContent = '继续';
+    resetBtn.textContent = '取消';
+    timerStatus.textContent = '已暂停';
+    return;
+  }
+  isRunning = true;
+  startBtn.textContent = '暂停';
+  timerStatus.textContent = '专注中...';
+  resetBtn.style.display = 'inline-block';
+  resetBtn.textContent = '暂停';
+  endBtn.style.display = 'inline-block';
+  timerStartTime = Date.now();
+  timerInitialSeconds = remainingSeconds;
+  timerInterval = setInterval(() => {
+    remainingSeconds = Math.max(0, timerInitialSeconds - Math.floor((Date.now() - timerStartTime) / 1000));
+    updateTimerDisplay();
+    if (remainingSeconds === 0) {
       clearInterval(timerInterval);
       isRunning = false;
-      remainingSeconds = currentPreset * 60;
-      timerStartTime = null; timerInitialSeconds = null;
-      updateTimerDisplay();
-      startBtn.textContent = '开始';
-      startBtn.className = 'btn btn-primary';
-      timerStatus.textContent = '选择任务，开始专注';
-      resetBtn.style.display = 'none';
-      endBtn.style.display = 'none';
-      renderTasks();
+      onTimerComplete(currentPreset, true);
     }
+  }, 1000);
+}
 
-    function endTimerEarly() {
-      if (!isRunning && remainingSeconds === currentPreset * 60) return;
-      clearInterval(timerInterval);
-      isRunning = false;
-      const saved = timerInitialSeconds !== null ? timerInitialSeconds : currentPreset * 60;
-      const minutes = Math.max(1, Math.floor((saved - remainingSeconds) / 60));
-      onTimerComplete(minutes, false);
+function resetTimer() {
+  clearInterval(timerInterval);
+  isRunning = false;
+  remainingSeconds = currentPreset * 60;
+  timerStartTime = null; timerInitialSeconds = null;
+  updateTimerDisplay();
+  startBtn.textContent = '开始';
+  timerStatus.textContent = '选择任务，开始专注';
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'none';
+  renderTasks();
+}
+
+function endTimerEarly() {
+  if (!isRunning && remainingSeconds === currentPreset * 60) return;
+  clearInterval(timerInterval);
+  isRunning = false;
+  const saved = timerInitialSeconds !== null ? timerInitialSeconds : currentPreset * 60;
+  const minutes = Math.max(1, Math.floor((saved - remainingSeconds) / 60));
+  onTimerComplete(minutes, false);
+}
+
+function onTimerComplete(minutes, showModal) {
+  startBtn.textContent = '开始';
+  timerStatus.textContent = '太棒了！完成一次专注 🎉';
+  remainingSeconds = currentPreset * 60;
+  timerStartTime = null; timerInitialSeconds = null;
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'none';
+  updateTimerDisplay();
+  if (showModal) {
+    document.getElementById('finishMinutes').textContent = minutes;
+    document.getElementById('finishModal').classList.add('show');
+  } else {
+    finishAndSave(minutes, '');
+  }
+}
+
+function closeFinishModal(skip) {
+  const note = skip ? '' : document.getElementById('finishNote').value.trim();
+  document.getElementById('finishModal').classList.remove('show');
+  document.getElementById('finishNote').value = '';
+  finishAndSave(parseInt(document.getElementById('finishMinutes').textContent) || currentPreset, note);
+}
+
+function finishAndSave(minutes, note) {
+  const data = loadData();
+  const today = new Date().toISOString().split('T')[0];
+  let taskText = '';
+  if (currentTaskIndex >= 0 && data.tasks[currentTaskIndex]) {
+    const task = data.tasks[currentTaskIndex];
+    taskText = task.text;
+    task.completed = true;
+    if (note) task.text = task.text + ' - ' + note;
+    else if (minutes >= 5) task.text = task.text + ' (' + minutes + '分钟)';
+    task.completedAt = Date.now();
+  }
+  // 加入历史记录
+  data.history.unshift({ text: taskText || '专注' + minutes + '分钟', time: minutes, date: today, ts: Date.now() });
+  if (data.history.length > 50) data.history = data.history.slice(0, 50);
+  saveData(data);
+  autoCheckin();
+  updateStats();
+  currentTaskIndex = -1;
+  updateTimerTaskLabel();
+  renderTasks();
+  timerStatus.textContent = '专注记录已保存 ✅';
+  setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2000);
+}
+
+presetBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (isRunning) return;
+    presetBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPreset = parseInt(btn.dataset.minutes);
+    remainingSeconds = currentPreset * 60;
+    updateTimerDisplay();
+  });
+});
+startBtn.addEventListener('click', startTimer);
+resetBtn.addEventListener('click', resetTimer);
+endBtn.addEventListener('click', endTimerEarly);
+
+// ===== 每日固定项目 =====
+function renderDailyFixed() {
+  checkDailyReset();
+  const data = loadData();
+  const done = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
+  document.getElementById('dailyFixedProgress').textContent = done + '/3';
+  const list = document.getElementById('dailyFixedList');
+  list.innerHTML = DAILY_FIXED.map(f => {
+    const isDone = !!data.dailyFixed[f.id];
+    return `<div class="daily-item ${isDone ? 'completed' : ''}" onclick="toggleDailyFixed('${f.id}')">
+      <div class="daily-item-checkbox">${isDone ? '✓' : ''}</div>
+      <span class="daily-item-text">${f.icon} ${f.text}</span>
+      <span class="daily-item-time">${f.time}</span>
+    </div>`;
+  }).join('');
+}
+
+window.toggleDailyFixed = function(id) {
+  const data = loadData();
+  data.dailyFixed[id] = !data.dailyFixed[id];
+  saveData(data);
+  renderDailyFixed();
+  autoCheckin();
+  updateStats();
+};
+
+// ===== 任务列表 =====
+const taskInput = document.getElementById('taskInput');
+document.getElementById('addTaskBtn').addEventListener('click', () => {
+  const text = taskInput.value.trim();
+  if (!text) return;
+  const data = loadData();
+  data.tasks.unshift({ text, completed: false, createdAt: Date.now() });
+  saveData(data);
+  taskInput.value = '';
+  renderTasks();
+});
+taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('addTaskBtn').click(); });
+
+function renderTasks() {
+  const data = loadData();
+  const el = document.getElementById('taskList');
+  if (data.tasks.length === 0) { el.innerHTML = '<div class="empty-state">还没有任务，写下要专注做的事 ✨</div>'; return; }
+  el.innerHTML = data.tasks.map((t, i) => {
+    let cls = 'task-item';
+    if (t.completed) cls += ' completed';
+    if (i === currentTaskIndex && isRunning) cls += ' timing';
+    let actions = '';
+    if (!t.completed) {
+      actions = `<button class="task-start-btn" onclick="startTaskTimer(${i})">▶</button>`;
     }
+    return `<li class="${cls}">
+      <div class="task-checkbox" onclick="toggleTask(${i})">${t.completed ? '✓' : ''}</div>
+      <span class="task-text">${t.text}</span>
+      ${actions}
+      <button class="task-delete" onclick="deleteTask(${i})">×</button>
+    </li>`;
+  }).join('');
+}
 
-    function onTimerComplete(minutes, showModal) {
-      startBtn.textContent = '开始';
-      startBtn.className = 'btn btn-primary';
-      timerStatus.textContent = '太棒了！完成一次专注 🎉';
-      remainingSeconds = currentPreset * 60;
-      timerStartTime = null; timerInitialSeconds = null;
-      resetBtn.style.display = 'none';
-      endBtn.style.display = 'none';
-      updateTimerDisplay();
-      if (showModal) {
-        document.getElementById('finishMinutes').textContent = minutes;
-        document.getElementById('finishModal').classList.add('show');
-      } else {
-        finishAndSave(minutes, '');
-      }
-    }
-
-    function closeFinishModal(skip) {
-      const note = skip ? '' : document.getElementById('finishNote').value.trim();
-      document.getElementById('finishModal').classList.remove('show');
-      document.getElementById('finishNote').value = '';
-      finishAndSave(parseInt(document.getElementById('finishMinutes').textContent) || currentPreset, note);
-    }
-
-    function finishAndSave(minutes, note) {
-      const data = loadData();
-      const today = new Date().toISOString().split('T')[0];
-      // 如果有正在计时的任务，标记为完成
-      if (currentTaskIndex >= 0 && data.tasks[currentTaskIndex]) {
-        data.tasks[currentTaskIndex].completed = true;
-        if (note) data.tasks[currentTaskIndex].text = data.tasks[currentTaskIndex].text + ' - ' + note;
-        else if (minutes >= 5) data.tasks[currentTaskIndex].text = data.tasks[currentTaskIndex].text + ' (' + minutes + '分钟)';
-      }
-      saveData(data);
-      autoCheckin();
-      updateStats();
-      currentTaskIndex = -1;
-      updateTimerTaskLabel();
-      renderTasks();
-      timerStatus.textContent = '专注记录已保存 ✅';
-      setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2000);
-    }
-
-    presetBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (isRunning) return; // 计时中不能切换时间
-        presetBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentPreset = parseInt(btn.dataset.minutes);
-        remainingSeconds = currentPreset * 60;
-        updateTimerDisplay();
-      });
-    });
-    startBtn.addEventListener('click', startTimer);
-    resetBtn.addEventListener('click', resetTimer);
-    endBtn.addEventListener('click', endTimerEarly);
-
-    // ========== 任务（专注页内） ==========
-    const taskInput = document.getElementById('taskInput');
-    document.getElementById('addTaskBtn').addEventListener('click', () => {
-      const text = taskInput.value.trim();
-      if (!text) return;
-      const data = loadData();
-      data.tasks.unshift({ text, completed: false, createdAt: Date.now() });
-      saveData(data);
-      taskInput.value = '';
-      renderTasks();
-    });
-    taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('addTaskBtn').click(); });
-
-    function renderTasks() {
-      const data = loadData();
-      autoCheckin();
-      const el = document.getElementById('taskList');
-      if (data.tasks.length === 0) { el.innerHTML = '<div class="empty-state">还没有任务，写下要专注做的事 ✨</div>'; updateStats(); return; }
-      el.innerHTML = data.tasks.map((t, i) => {
-        let cls = 'task-item';
-        if (t.completed) cls += ' completed';
-        if (i === currentTaskIndex && isRunning) cls += ' timing';
-        let actions = '';
-        if (!t.completed) {
-          actions = `<button class="task-start-btn" onclick="startTaskTimer(${i})">▶</button>`;
-        }
-        return `<li class="${cls}">
-          <div class="task-checkbox" onclick="toggleTask(${i})">${t.completed ? '✓' : ''}</div>
-          <span class="task-text">${t.text}</span>
-          ${actions}
-          <button class="task-delete" onclick="deleteTask(${i})">×</button>
-        </li>`;
-      }).join('');
-      updateStats();
-    }
-
-    window.startTaskTimer = function(i) {
-      const data = loadData();
-      if (data.tasks[i].completed) return;
-      // 如果有任务正在计时，先停止
-      if (isRunning) {
-        clearInterval(timerInterval);
-        isRunning = false;
-      }
-      currentTaskIndex = i;
-      remainingSeconds = currentPreset * 60;
-      updateTimerDisplay();
-      updateTimerTaskLabel();
-      renderTasks();
-      // 自动开始计时
-      startTimer();
-    };
-
-    window.toggleTask = function(i) {
-      if (i === currentTaskIndex && isRunning) return; // 正在计时不能点
-      const data = loadData();
-      data.tasks[i].completed = !data.tasks[i].completed;
-      saveData(data);
-      renderTasks();
-    };
-    window.deleteTask = function(i) {
-      if (i === currentTaskIndex) {
-        if (isRunning) {
-          clearInterval(timerInterval); isRunning = false;
-        }
-        currentTaskIndex = -1;
-        remainingSeconds = currentPreset * 60;
-        updateTimerDisplay();
-        updateTimerTaskLabel();
-      }
-      const data = loadData();
-      data.tasks.splice(i, 1);
-      saveData(data);
-      renderTasks();
-    };
-
-    // 目标
-    const goalInput = document.getElementById('goalInput');
-    document.getElementById('addGoalBtn').addEventListener('click', () => {
-      const text = goalInput.value.trim();
-      if (!text) return;
-      const data = loadData();
-      if (data.goals.length >= 3) { alert('最多设置3个核心目标'); return; }
-      const today = new Date().toISOString().split('T')[0];
-      if (data.goalsDate !== today) { data.goals = []; data.goalsDate = today; }
-      data.goals.push({ text, completed: false });
-      saveData(data);
-      goalInput.value = '';
-      renderGoals();
-    });
-    goalInput.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('addGoalBtn').click(); });
-    function renderGoals() {
-      const data = loadData();
-      const today = new Date().toISOString().split('T')[0];
-      if (data.goalsDate !== today) {
-        data.goals = data.goals.map(g => ({ ...g, completed: false }));
-        data.goalsDate = today;
-        saveData(data);
-      }
-      const el = document.getElementById('goalList');
-      if (data.goals.length === 0) { el.innerHTML = '<div class="empty-state">设定今天最重要的3件事 🎯</div>'; document.getElementById('goalProgress').textContent = ''; return; }
-      el.innerHTML = data.goals.map((g, i) => `<li class="goal-item ${g.completed ? 'completed' : ''}"><div class="goal-checkbox" onclick="toggleGoal(${i})">${g.completed ? '✓' : ''}</div><span class="goal-text">${g.text}</span><button class="goal-delete" onclick="deleteGoal(${i})">×</button></li>`).join('');
-      const done = data.goals.filter(g => g.completed).length;
-      document.getElementById('goalProgress').textContent = `已完成 ${done}/${data.goals.length}`;
-    }
-    window.toggleGoal = function(i) { const data = loadData(); data.goals[i].completed = !data.goals[i].completed; saveData(data); autoCheckin(); renderGoals(); };
-    window.deleteGoal = function(i) { const data = loadData(); data.goals.splice(i, 1); saveData(data); renderGoals(); };
-
-    // 日历
-    let currentMonth = new Date();
-    function renderCalendar() {
-      const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
-      const today = new Date();
-      document.getElementById('calendarMonth').textContent = `${year}年 ${month + 1}月`;
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const todayStr = today.toISOString().split('T')[0];
-      const data = loadData();
-      let html = '';
-      ['日','一','二','三','四','五','六'].forEach(d => { html += `<div class="calendar-day-name">${d}</div>`; });
-      for (let i = 0; i < firstDay; i++) html += '<div class="calendar-day empty"></div>';
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isToday = dateStr === todayStr;
-        const isChecked = data.checkins[dateStr];
-        const isFuture = new Date(dateStr + 'T00:00:00') > today;
-        let cls = 'calendar-day';
-        if (isToday) cls += ' today';
-        if (isChecked) cls += ' checked';
-        if (isFuture) cls += ' future';
-        const handler = !isFuture ? `onclick="toggleCheckin('${dateStr}')"` : '';
-        html += `<div class="${cls}" ${handler}>${d}</div>`;
-      }
-      document.getElementById('calendarGrid').innerHTML = html;
-    }
-    window.toggleCheckin = function(dateStr) { const data = loadData(); data.checkins[dateStr] = !data.checkins[dateStr]; saveData(data); renderCalendar(); updateStats(); };
-    document.getElementById('prevMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()-1); renderCalendar(); });
-    document.getElementById('nextMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendar(); });
-
-    // 心情
-    function renderMood() {
-      const data = loadData();
-      const today = new Date().toISOString().split('T')[0];
-      document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', b.dataset.mood === data.moods[today]));
-    }
-    document.querySelectorAll('.mood-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const data = loadData();
-        data.moods[new Date().toISOString().split('T')[0]] = btn.dataset.mood;
-        saveData(data);
-        renderMood();
-      });
-    });
-
-    // 统计
-    function updateStats() {
-      const data = loadData();
-      // 统计已完成任务数作为本周专注次数
-      document.getElementById('totalFocus').textContent = data.tasks.filter(t => t.completed).length;
-      document.getElementById('completedTasks').textContent = data.tasks.filter(t => t.completed).length;
-      document.getElementById('checkInDays').textContent = Object.values(data.checkins).filter(Boolean).length;
-    }
-
-    // 同步
-    const GIST_FILE = 'nengixing-data.json';
-    function renderSyncUI() {
-      const area = document.getElementById('syncSetupArea');
-      const hint = document.getElementById('syncHint');
-      const savedPin = localStorage.getItem('nengixing_pin');
-      if (savedPin) {
-        hint.textContent = `已设置密钥：${savedPin}。点击按钮直接同步，不用每次输入。`;
-        area.innerHTML = `<button class="sync-btn" id="syncBtn">☁️ 同步数据</button><button class="sync-btn" id="changePinBtn" style="margin-top:8px;background:linear-gradient(135deg,#e0e0e0,#c0c0c0);color:#555">🔑 更换密钥</button>`;
-        document.getElementById('syncBtn').addEventListener('click', doSyncDirect);
-        document.getElementById('changePinBtn').addEventListener('click', openSyncSetup);
-      } else {
-        hint.textContent = '设定一个简短密钥（如 ABC123），以后输入密钥就能同步。换设备也不怕丢。';
-        area.innerHTML = `<button class="sync-btn" id="syncBtn" onclick="openSyncSetup()">🔑 设置同步密钥</button>`;
-      }
-    }
-    function openSyncSetup() {
-      document.getElementById('syncPinInput').value = localStorage.getItem('nengixing_pin') || '';
-      document.getElementById('syncTokenInput').value = localStorage.getItem('nengixing_gh_token') || '';
-      document.getElementById('syncSetupResult').innerHTML = '';
-      document.getElementById('syncSetupModal').classList.add('show');
-    }
-    function openSyncByPin() {
-      document.getElementById('tokenInput').value = localStorage.getItem('nengixing_pin') || '';
-      document.getElementById('syncResult2').innerHTML = '';
-      document.getElementById('syncModal').classList.add('show');
-    }
-    function closeSyncModal() { document.getElementById('syncModal').classList.remove('show'); }
-    function closeSyncSetupModal() { document.getElementById('syncSetupModal').classList.remove('show'); }
-
-    async function doSyncDirect() {
-      const token = localStorage.getItem('nengixing_gh_token');
-      const gistId = localStorage.getItem('nengixing_gist_id');
-      const resultEl = document.getElementById('syncResult');
-      if (!token) { openSyncSetup(); return; }
-      resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
-      try {
-        const localData = loadData();
-        const payload = JSON.stringify(localData, null, 2);
-        if (gistId) {
-          const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
-          existing.files[GIST_FILE] = { content: payload };
-          await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
-        } else {
-          const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
-          if (!res.id) throw new Error(res.message || '创建失败');
-          localStorage.setItem('nengixing_gist_id', res.id);
-        }
-        resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！数据已保存到云端</div>';
-      } catch(err) {
-        resultEl.innerHTML = `<div class="sync-result error">❌ 同步失败：${err.message}</div>`;
-      }
-    }
-
-    async function doSync() {
-      const pin = document.getElementById('tokenInput').value.trim();
-      const savedPin = localStorage.getItem('nengixing_pin');
-      const savedToken = localStorage.getItem('nengixing_gh_token');
-      const resultEl = document.getElementById('syncResult2');
-      if (pin !== savedPin) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥错误</div>`; return; }
-      resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
-      try {
-        const localData = loadData();
-        const payload = JSON.stringify(localData, null, 2);
-        const gistId = localStorage.getItem('nengixing_gist_id');
-        if (gistId) {
-          const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${savedToken}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
-          existing.files[GIST_FILE] = { content: payload };
-          await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${savedToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
-        } else {
-          const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${savedToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
-          if (!res.id) throw new Error(res.message || '创建失败');
-          localStorage.setItem('nengixing_gist_id', res.id);
-        }
-        resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！</div>';
-        setTimeout(closeSyncModal, 1200);
-      } catch(err) {
-        resultEl.innerHTML = `<div class="sync-result error">❌ 同步失败：${err.message}</div>`;
-      }
-    }
-    async function saveSyncSetup() {
-      const pin = document.getElementById('syncPinInput').value.trim();
-      const token = document.getElementById('syncTokenInput').value.trim();
-      const resultEl = document.getElementById('syncSetupResult');
-      if (!pin || pin.length < 3) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥至少3位</div>`; return; }
-      if (!token || !token.startsWith('ghp_')) { resultEl.innerHTML = `<div class="sync-result error">❌ 请输入正确的 GitHub Token</div>`; return; }
-      resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在验证 Token...</div>';
-      try {
-        await fetch('https://api.github.com/gists', { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => { if (!r.ok) throw new Error('Token 无效'); return r.json(); });
-        localStorage.setItem('nengixing_pin', pin);
-        localStorage.setItem('nengixing_gh_token', token);
-        resultEl.innerHTML = '<div class="sync-result success">✅ 密钥设置成功！以后点同步直接用</div>';
-        setTimeout(() => { closeSyncSetupModal(); renderSyncUI(); }, 1200);
-      } catch(err) {
-        resultEl.innerHTML = `<div class="sync-result error">❌ Token 无效</div>`;
-      }
-    }
-
-    // 初始化
+window.startTaskTimer = function(i) {
+  if (isRunning) { clearInterval(timerInterval); isRunning = false; }
+  currentTaskIndex = i;
+  remainingSeconds = currentPreset * 60;
+  updateTimerDisplay();
+  updateTimerTaskLabel();
+  renderTasks();
+  startTimer();
+};
+window.toggleTask = function(i) {
+  if (i === currentTaskIndex && isRunning) return;
+  const data = loadData();
+  const task = data.tasks[i];
+  task.completed = !task.completed;
+  if (task.completed) task.completedAt = Date.now();
+  saveData(data);
+  renderTasks();
+  autoCheckin();
+  updateStats();
+};
+window.deleteTask = function(i) {
+  if (i === currentTaskIndex) {
+    if (isRunning) { clearInterval(timerInterval); isRunning = false; }
+    currentTaskIndex = -1;
+    remainingSeconds = currentPreset * 60;
     updateTimerDisplay();
     updateTimerTaskLabel();
-    renderTasks();
-    renderCalendar();
-    renderMood();
-    updateStats();
-    renderGoals();
-    renderSyncUI();
-  </script>
+  }
+  const data = loadData();
+  data.tasks.splice(i, 1);
+  saveData(data);
+  renderTasks();
+};
+
+// ===== 打卡日历 =====
+let currentMonth = new Date();
+function renderCalendar() {
+  const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
+  const today = new Date();
+  document.getElementById('calendarMonth').textContent = `${year}年 ${month + 1}月`;
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = today.toISOString().split('T')[0];
+  const data = loadData();
+  let html = '';
+  ['日','一','二','三','四','五','六'].forEach(d => { html += `<div class="calendar-day-name">${d}</div>`; });
+  for (let i = 0; i < firstDay; i++) html += '<div class="calendar-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const isChecked = data.checkins[dateStr];
+    const isFuture = new Date(dateStr + 'T00:00:00') > today;
+    let cls = 'calendar-day';
+    if (isToday) cls += ' today';
+    if (isChecked) cls += ' checked';
+    if (isFuture) cls += ' future';
+    const handler = !isFuture ? `onclick="toggleCheckin('${dateStr}')"` : '';
+    html += `<div class="${cls}" ${handler}>${d}</div>`;
+  }
+  document.getElementById('calendarGrid').innerHTML = html;
+}
+window.toggleCheckin = function(dateStr) {
+  const data = loadData();
+  data.checkins[dateStr] = !data.checkins[dateStr];
+  saveData(data);
+  renderCalendar();
+  updateStats();
+};
+document.getElementById('prevMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()-1); renderCalendar(); });
+document.getElementById('nextMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendar(); });
+
+// ===== 统计 =====
+function updateStats() {
+  const data = loadData();
+  const today = new Date().toISOString().split('T')[0];
+  // 今日完成任务
+  const todayTasks = data.tasks.filter(t => t.completedAt && new Date(t.completedAt).toISOString().split('T')[0] === today).length;
+  // 每日必做
+  const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
+  const total = todayTasks + dailyDone;
+  document.getElementById('totalFocus').textContent = total;
+  document.getElementById('checkInDays').textContent = Object.values(data.checkins).filter(Boolean).length;
+  // 完成率（每日必做 3项为基准）
+  const rate = Math.round((dailyDone / 3) * 100);
+  document.getElementById('taskRate').textContent = rate + '%';
+  document.getElementById('dailyRateText').textContent = dailyDone + '/3';
+  document.getElementById('dailyRateFill').style.width = rate + '%';
+  // 历史记录
+  renderTaskHistory();
+}
+
+function renderTaskHistory() {
+  const data = loadData();
+  const today = new Date().toISOString().split('T')[0];
+  const el = document.getElementById('taskHistoryList');
+  const todayItems = data.history.filter(h => h.date === today);
+  if (todayItems.length === 0) {
+    el.innerHTML = '<div class="empty-state">今天还没有完成记录 💪</div>';
+    return;
+  }
+  el.innerHTML = todayItems.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
+}
+
+// ===== 同步 =====
+const GIST_FILE = 'nengixing-data.json';
+function renderSyncUI() {
+  const area = document.getElementById('syncSetupArea');
+  const hint = document.getElementById('syncHint');
+  const savedPin = localStorage.getItem('nengixing_pin');
+  if (savedPin) {
+    hint.textContent = `已设置密钥：${savedPin}。点击按钮直接同步，不用每次输入。`;
+    area.innerHTML = `<button class="sync-btn" id="syncBtn">☁️ 同步数据</button><button class="sync-btn" id="changePinBtn" style="margin-top:8px;background:linear-gradient(135deg,#e0e0e0,#c0c0c0);color:#555">🔑 更换密钥</button>`;
+    document.getElementById('syncBtn').addEventListener('click', doSyncDirect);
+    document.getElementById('changePinBtn').addEventListener('click', openSyncSetup);
+  } else {
+    hint.textContent = '设定一个简短密钥（如 ABC123），以后输入密钥就能同步。换设备也不怕丢。';
+    area.innerHTML = `<button class="sync-btn" id="syncBtn" onclick="openSyncSetup()">🔑 设置同步密钥</button>`;
+  }
+}
+function openSyncSetup() {
+  document.getElementById('syncPinInput').value = localStorage.getItem('nengixing_pin') || '';
+  document.getElementById('syncTokenInput').value = localStorage.getItem('nengixing_gh_token') || '';
+  document.getElementById('syncSetupResult').innerHTML = '';
+  document.getElementById('syncSetupModal').classList.add('show');
+}
+function closeSyncModal() { document.getElementById('syncModal').classList.remove('show'); }
+function closeSyncSetupModal() { document.getElementById('syncSetupModal').classList.remove('show'); }
+
+async function doSyncDirect() {
+  const token = localStorage.getItem('nengixing_gh_token');
+  const gistId = localStorage.getItem('nengixing_gist_id');
+  const resultEl = document.getElementById('syncResult');
+  if (!token) { openSyncSetup(); return; }
+  resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
+  try {
+    const localData = loadData();
+    const payload = JSON.stringify(localData, null, 2);
+    if (gistId) {
+      const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
+      existing.files[GIST_FILE] = { content: payload };
+      await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
+    } else {
+      const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
+      if (!res.id) throw new Error(res.message || '创建失败');
+      localStorage.setItem('nengixing_gist_id', res.id);
+    }
+    resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！数据已保存到云端</div>';
+  } catch(err) {
+    resultEl.innerHTML = `<div class="sync-result error">❌ 同步失败：${err.message}</div>`;
+  }
+}
+async function doSync() {
+  const pin = document.getElementById('tokenInput').value.trim();
+  const savedPin = localStorage.getItem('nengixing_pin');
+  const savedToken = localStorage.getItem('nengixing_gh_token');
+  const resultEl = document.getElementById('syncResult2');
+  if (pin !== savedPin) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥错误</div>`; return; }
+  resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
+  try {
+    const localData = loadData();
+    const payload = JSON.stringify(localData, null, 2);
+    const gistId = localStorage.getItem('nengixing_gist_id');
+    if (gistId) {
+      const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${savedToken}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
+      existing.files[GIST_FILE] = { content: payload };
+      await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${savedToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
+    } else {
+      const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${savedToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
+      if (!res.id) throw new Error(res.message || '创建失败');
+      localStorage.setItem('nengixing_gist_id', res.id);
+    }
+    resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！</div>';
+    setTimeout(closeSyncModal, 1200);
+  } catch(err) {
+    resultEl.innerHTML = `<div class="sync-result error">❌ 同步失败：${err.message}</div>`;
+  }
+}
+async function saveSyncSetup() {
+  const pin = document.getElementById('syncPinInput').value.trim();
+  const token = document.getElementById('syncTokenInput').value.trim();
+  const resultEl = document.getElementById('syncSetupResult');
+  if (!pin || pin.length < 3) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥至少3位</div>`; return; }
+  if (!token || !token.startsWith('ghp_')) { resultEl.innerHTML = `<div class="sync-result error">❌ 请输入正确的 GitHub Token</div>`; return; }
+  resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在验证 Token...</div>';
+  try {
+    await fetch('https://api.github.com/gists', { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => { if (!r.ok) throw new Error('Token 无效'); return r.json(); });
+    localStorage.setItem('nengixing_pin', pin);
+    localStorage.setItem('nengixing_gh_token', token);
+    resultEl.innerHTML = '<div class="sync-result success">✅ 密钥设置成功！以后点同步直接用</div>';
+    setTimeout(() => { closeSyncSetupModal(); renderSyncUI(); }, 1200);
+  } catch(err) {
+    resultEl.innerHTML = `<div class="sync-result error">❌ Token 无效</div>`;
+  }
+}
+
+// ===== 初始化 =====
+checkDailyReset();
+updateTimerDisplay();
+updateTimerTaskLabel();
+renderTasks();
+renderDailyFixed();
+renderCalendar();
+updateStats();
+renderSyncUI();
+</script>
 </body>
 </html>
