@@ -34,6 +34,7 @@
     .btn { flex: 1; padding: 15px 0; border-radius: 50px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.25s ease; font-family: inherit; }
     .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
     .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
     .btn-secondary { background: rgba(255,255,255,0.85); color: #666; backdrop-filter: blur(10px); }
     .btn-secondary:active { transform: scale(0.97); }
     .btn-danger { background: rgba(255,100,100,0.15); color: #c0392b; }
@@ -44,12 +45,19 @@
     .add-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 12px; border: none; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #6a5a4a; font-weight: 600; cursor: pointer; font-size: 1.3rem; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .add-btn:active { transform: translateY(-50%) scale(0.92); }
     .task-list { list-style: none; }
-    .task-item { display: flex; align-items: center; gap: 12px; padding: 14px 14px; border-radius: 16px; margin-bottom: 10px; background: #faf9fb; transition: all 0.2s; }
-    .task-item.completed { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); }
+    .timer-task-label { text-align: center; font-size: 0.88rem; color: rgba(90,74,58,0.7); margin-bottom: 6px; position: relative; z-index: 1; min-height: 22px; transition: all 0.3s; }
+    .timer-task-label.active { color: rgba(90,74,58,0.9); font-weight: 600; }
+    .task-item { display: flex; align-items: center; gap: 12px; padding: 14px 14px; border-radius: 16px; margin-bottom: 10px; background: #faf9fb; transition: all 0.2s; cursor: pointer; }
+    .task-item:active { transform: scale(0.98); }
+    .task-item.completed { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); cursor: default; }
     .task-item.completed .task-text { text-decoration: line-through; color: #999; }
+    .task-item.timing { background: linear-gradient(135deg, #fff5e0 0%, #ffe4c4 100%); border: 2px solid #fcb69f; }
+    .task-item.timing .task-text { color: #c0392b; font-weight: 600; }
     .task-checkbox { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ddd; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white; flex-shrink: 0; transition: all 0.2s; }
     .task-item.completed .task-checkbox { background: #4caf50; border-color: #4caf50; }
     .task-text { flex: 1; font-size: 0.97rem; color: #444; min-width: 0; word-break: break-word; }
+    .task-start-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fcb69f; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #6a5a4a; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; line-height: 1; padding-left: 2px; }
+    .task-start-btn:active { transform: scale(0.9); }
     .task-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.4rem; padding: 4px 6px; transition: color 0.2s; flex-shrink: 0; line-height: 1; }
     .task-delete:active { color: #ff5252; }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -131,12 +139,13 @@
     <p id="headerDate"></p>
   </div>
 
-  <!-- 专注时钟 -->
+  <!-- 专注（计时器+任务） -->
   <div class="page active" id="page-timer">
-    <div class="card timer-card">
+    <div class="card timer-card" id="timerCard">
+      <div class="timer-task-label" id="timerTaskLabel">选择一个任务开始计时</div>
       <div class="timer-display">
         <div class="timer-time" id="timerDisplay">25:00</div>
-        <div class="timer-status" id="timerStatus">准备开始专注</div>
+        <div class="timer-status" id="timerStatus">选择任务，开始专注</div>
       </div>
       <div class="timer-presets">
         <button class="preset-btn active" data-minutes="25">25分钟</button>
@@ -144,23 +153,15 @@
         <button class="preset-btn" data-minutes="60">60分钟</button>
       </div>
       <div class="timer-buttons">
-        <button class="btn btn-primary" id="startBtn">开始</button>
-        <button class="btn btn-secondary" id="resetBtn">重置</button>
-        <button class="btn btn-danger" id="endBtn">结束</button>
+        <button class="btn btn-primary" id="startBtn" disabled>开始</button>
+        <button class="btn btn-secondary" id="resetBtn" style="display:none">暂停</button>
+        <button class="btn btn-danger" id="endBtn" style="display:none">结束</button>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">📝 今日专注记录</div>
-      <div id="todayFocusLogs"></div>
-    </div>
-  </div>
-
-  <!-- 任务 -->
-  <div class="page" id="page-task">
-    <div class="card">
-      <div class="card-title">✅ 今日任务 <span class="auto-badge">完成即打卡</span></div>
+      <div class="card-title">📋 今日任务</div>
       <div class="task-input-wrap">
-        <input type="text" class="task-input" id="taskInput" placeholder="添加今日任务...">
+        <input type="text" class="task-input" id="taskInput" placeholder="写下要专注做的事...">
         <button class="add-btn" id="addTaskBtn">+</button>
       </div>
       <ul class="task-list" id="taskList"></ul>
@@ -231,7 +232,6 @@
   <!-- 底部导航 -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-page="timer"><span class="nav-icon">⏱️</span><span class="nav-label">专注</span></button>
-    <button class="nav-item" data-page="task"><span class="nav-icon">✅</span><span class="nav-label">任务</span></button>
     <button class="nav-item" data-page="goal"><span class="nav-icon">🎯</span><span class="nav-label">目标</span></button>
     <button class="nav-item" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">打卡</span></button>
     <button class="nav-item" data-page="mood"><span class="nav-icon">💕</span><span class="nav-label">心情</span></button>
@@ -304,17 +304,16 @@
         if (t === 'calendar') renderCalendar();
         if (t === 'mood') renderMood();
         if (t === 'stats') { updateStats(); renderSyncUI(); }
-        if (t === 'task') renderTasks();
         if (t === 'goal') renderGoals();
-        if (t === 'timer') renderTodayFocusLogs();
+        if (t === 'timer') { renderTasks(); updateTimerTaskLabel(); }
       });
     });
 
     // 数据存储
-    const DATA_KEY = 'focus_clock_data_v3';
+    const DATA_KEY = 'focus_clock_data_v4';
     function loadData() {
       const d = localStorage.getItem(DATA_KEY);
-      return d ? JSON.parse(d) : { tasks: [], goals: [], checkins: {}, moods: {}, focusLogs: [], goalsDate: '' };
+      return d ? JSON.parse(d) : { tasks: [], goals: [], checkins: {}, moods: {}, goalsDate: '' };
     }
     function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
 
@@ -329,11 +328,13 @@
       }
     }
 
-    // 计时器
+    // ========== 计时器 ==========
     let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
     let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
+    let currentTaskIndex = -1; // 当前正在计时的任务索引
     const timerDisplay = document.getElementById('timerDisplay');
     const timerStatus = document.getElementById('timerStatus');
+    const timerTaskLabel = document.getElementById('timerTaskLabel');
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
     const endBtn = document.getElementById('endBtn');
@@ -342,17 +343,41 @@
     function formatTime(s) { return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }
     function updateTimerDisplay() { timerDisplay.textContent = formatTime(remainingSeconds); }
 
+    function updateTimerTaskLabel() {
+      if (currentTaskIndex >= 0) {
+        const data = loadData();
+        const task = data.tasks[currentTaskIndex];
+        if (task) {
+          timerTaskLabel.textContent = '🎯 ' + task.text;
+          timerTaskLabel.classList.add('active');
+          startBtn.disabled = false;
+        }
+      } else {
+        timerTaskLabel.textContent = '选择一个任务开始计时';
+        timerTaskLabel.classList.remove('active');
+        startBtn.disabled = true;
+      }
+    }
+
     function startTimer() {
+      if (currentTaskIndex < 0) return;
       if (isRunning) {
+        // 暂停
         clearInterval(timerInterval);
         isRunning = false;
         startBtn.textContent = '继续';
+        startBtn.className = 'btn btn-primary';
+        resetBtn.style.display = 'inline-block';
+        resetBtn.textContent = '取消';
         timerStatus.textContent = '已暂停';
         return;
       }
       isRunning = true;
       startBtn.textContent = '暂停';
       timerStatus.textContent = '专注中...';
+      resetBtn.style.display = 'inline-block';
+      resetBtn.textContent = '暂停';
+      endBtn.style.display = 'inline-block';
       timerStartTime = Date.now();
       timerInitialSeconds = remainingSeconds;
       timerInterval = setInterval(() => {
@@ -373,14 +398,17 @@
       timerStartTime = null; timerInitialSeconds = null;
       updateTimerDisplay();
       startBtn.textContent = '开始';
-      timerStatus.textContent = '准备开始专注';
+      startBtn.className = 'btn btn-primary';
+      timerStatus.textContent = '选择任务，开始专注';
+      resetBtn.style.display = 'none';
+      endBtn.style.display = 'none';
+      renderTasks();
     }
 
     function endTimerEarly() {
       if (!isRunning && remainingSeconds === currentPreset * 60) return;
       clearInterval(timerInterval);
       isRunning = false;
-      const elapsed = timerStartTime ? Math.floor((Date.now() - timerStartTime) / 1000) : 0;
       const saved = timerInitialSeconds !== null ? timerInitialSeconds : currentPreset * 60;
       const minutes = Math.max(1, Math.floor((saved - remainingSeconds) / 60));
       onTimerComplete(minutes, false);
@@ -388,79 +416,136 @@
 
     function onTimerComplete(minutes, showModal) {
       startBtn.textContent = '开始';
+      startBtn.className = 'btn btn-primary';
       timerStatus.textContent = '太棒了！完成一次专注 🎉';
       remainingSeconds = currentPreset * 60;
       timerStartTime = null; timerInitialSeconds = null;
+      resetBtn.style.display = 'none';
+      endBtn.style.display = 'none';
       updateTimerDisplay();
       if (showModal) {
         document.getElementById('finishMinutes').textContent = minutes;
         document.getElementById('finishModal').classList.add('show');
       } else {
-        saveFocusLog(minutes, '');
+        finishAndSave(minutes, '');
       }
-    }
-
-    function saveFocusLog(minutes, note) {
-      const data = loadData();
-      const today = new Date().toISOString().split('T')[0];
-      data.focusLogs.push({ date: today, minutes, note });
-      saveData(data);
-      autoCheckin();
-      updateStats();
-      renderTodayFocusLogs();
     }
 
     function closeFinishModal(skip) {
       const note = skip ? '' : document.getElementById('finishNote').value.trim();
       document.getElementById('finishModal').classList.remove('show');
       document.getElementById('finishNote').value = '';
-      saveFocusLog(parseInt(document.getElementById('finishMinutes').textContent) || currentPreset, note);
+      finishAndSave(parseInt(document.getElementById('finishMinutes').textContent) || currentPreset, note);
+    }
+
+    function finishAndSave(minutes, note) {
+      const data = loadData();
+      const today = new Date().toISOString().split('T')[0];
+      // 如果有正在计时的任务，标记为完成
+      if (currentTaskIndex >= 0 && data.tasks[currentTaskIndex]) {
+        data.tasks[currentTaskIndex].completed = true;
+        if (note) data.tasks[currentTaskIndex].text = data.tasks[currentTaskIndex].text + ' - ' + note;
+        else if (minutes >= 5) data.tasks[currentTaskIndex].text = data.tasks[currentTaskIndex].text + ' (' + minutes + '分钟)';
+      }
+      saveData(data);
+      autoCheckin();
+      updateStats();
+      currentTaskIndex = -1;
+      updateTimerTaskLabel();
+      renderTasks();
+      timerStatus.textContent = '专注记录已保存 ✅';
+      setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2000);
     }
 
     presetBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        if (isRunning) return; // 计时中不能切换时间
         presetBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentPreset = parseInt(btn.dataset.minutes);
-        resetTimer();
+        remainingSeconds = currentPreset * 60;
+        updateTimerDisplay();
       });
     });
     startBtn.addEventListener('click', startTimer);
     resetBtn.addEventListener('click', resetTimer);
     endBtn.addEventListener('click', endTimerEarly);
 
-    // 今日专注记录
-    function renderTodayFocusLogs() {
-      const data = loadData();
-      const today = new Date().toISOString().split('T')[0];
-      const logs = data.focusLogs.filter(l => l.date === today).reverse();
-      const el = document.getElementById('todayFocusLogs');
-      if (logs.length === 0) { el.innerHTML = '<div class="empty-state">还没有专注记录，开始计时吧 💪</div>'; return; }
-      el.innerHTML = logs.map(l => `<div class="focus-log-item"><div class="focus-log-time">⏱️ ${l.minutes}分钟</div>${l.note ? `<div class="focus-log-note">${l.note}</div>` : ''}</div>`).join('');
-    }
-
-    // 任务
+    // ========== 任务（专注页内） ==========
     const taskInput = document.getElementById('taskInput');
     document.getElementById('addTaskBtn').addEventListener('click', () => {
       const text = taskInput.value.trim();
       if (!text) return;
       const data = loadData();
-      data.tasks.push({ text, completed: false });
+      data.tasks.unshift({ text, completed: false, createdAt: Date.now() });
       saveData(data);
       taskInput.value = '';
       renderTasks();
     });
     taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('addTaskBtn').click(); });
+
     function renderTasks() {
       const data = loadData();
       autoCheckin();
       const el = document.getElementById('taskList');
-      if (data.tasks.length === 0) { el.innerHTML = '<div class="empty-state">还没有任务，添加一个吧 ✨</div>'; return; }
-      el.innerHTML = data.tasks.map((t, i) => `<li class="task-item ${t.completed ? 'completed' : ''}"><div class="task-checkbox" onclick="toggleTask(${i})">${t.completed ? '✓' : ''}</div><span class="task-text">${t.text}</span><button class="task-delete" onclick="deleteTask(${i})">×</button></li>`).join('');
+      if (data.tasks.length === 0) { el.innerHTML = '<div class="empty-state">还没有任务，写下要专注做的事 ✨</div>'; updateStats(); return; }
+      el.innerHTML = data.tasks.map((t, i) => {
+        let cls = 'task-item';
+        if (t.completed) cls += ' completed';
+        if (i === currentTaskIndex && isRunning) cls += ' timing';
+        let actions = '';
+        if (!t.completed) {
+          actions = `<button class="task-start-btn" onclick="startTaskTimer(${i})">▶</button>`;
+        }
+        return `<li class="${cls}">
+          <div class="task-checkbox" onclick="toggleTask(${i})">${t.completed ? '✓' : ''}</div>
+          <span class="task-text">${t.text}</span>
+          ${actions}
+          <button class="task-delete" onclick="deleteTask(${i})">×</button>
+        </li>`;
+      }).join('');
       updateStats();
     }
-    window.toggleTask = function(i) { const data = loadData(); data.tasks[i].completed = !data.tasks[i].completed; saveData(data); renderTasks(); };
-    window.deleteTask = function(i) { const data = loadData(); data.tasks.splice(i, 1); saveData(data); renderTasks(); };
+
+    window.startTaskTimer = function(i) {
+      const data = loadData();
+      if (data.tasks[i].completed) return;
+      // 如果有任务正在计时，先停止
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+      }
+      currentTaskIndex = i;
+      remainingSeconds = currentPreset * 60;
+      updateTimerDisplay();
+      updateTimerTaskLabel();
+      renderTasks();
+      // 自动开始计时
+      startTimer();
+    };
+
+    window.toggleTask = function(i) {
+      if (i === currentTaskIndex && isRunning) return; // 正在计时不能点
+      const data = loadData();
+      data.tasks[i].completed = !data.tasks[i].completed;
+      saveData(data);
+      renderTasks();
+    };
+    window.deleteTask = function(i) {
+      if (i === currentTaskIndex) {
+        if (isRunning) {
+          clearInterval(timerInterval); isRunning = false;
+        }
+        currentTaskIndex = -1;
+        remainingSeconds = currentPreset * 60;
+        updateTimerDisplay();
+        updateTimerTaskLabel();
+      }
+      const data = loadData();
+      data.tasks.splice(i, 1);
+      saveData(data);
+      renderTasks();
+    };
 
     // 目标
     const goalInput = document.getElementById('goalInput');
@@ -543,9 +628,8 @@
     // 统计
     function updateStats() {
       const data = loadData();
-      const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-      const weekMinutes = data.focusLogs.filter(l => new Date(l.date) >= weekStart).reduce((s, l) => s + l.minutes, 0);
-      document.getElementById('totalFocus').textContent = weekMinutes;
+      // 统计已完成任务数作为本周专注次数
+      document.getElementById('totalFocus').textContent = data.tasks.filter(t => t.completed).length;
       document.getElementById('completedTasks').textContent = data.tasks.filter(t => t.completed).length;
       document.getElementById('checkInDays').textContent = Object.values(data.checkins).filter(Boolean).length;
     }
@@ -650,12 +734,12 @@
 
     // 初始化
     updateTimerDisplay();
+    updateTimerTaskLabel();
     renderTasks();
     renderCalendar();
     renderMood();
     updateStats();
     renderGoals();
-    renderTodayFocusLogs();
     renderSyncUI();
   </script>
 </body>
