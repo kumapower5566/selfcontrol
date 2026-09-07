@@ -1450,6 +1450,14 @@ async function saveSyncSetup() {
 // ===== 初始化 =====
 function init() {
   checkDailyReset();
+  // 清理旧版本可能残留的“无记录绿勾”，让删除结果彻底一致
+  const initData = loadData();
+  const beforeRecalc = JSON.stringify(initData);
+  recalcDailyFromTodayHistory(initData);
+  if (JSON.stringify(initData) !== beforeRecalc) {
+    markDataUpdated(initData);
+    saveData(initData);
+  }
   updateTimerDisplay();
   updateTimerTaskLabel();
   renderTasks();
