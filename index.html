@@ -134,6 +134,10 @@
     .calendar-day-hint.on { color: #2e7d32; font-weight: 600; }
     .manual-checkin-btn { width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
     .manual-checkin-btn:active { transform: scale(0.97); }
+    .manual-cat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .manual-cat { padding: 9px 2px; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.78rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .manual-cat:active { transform: scale(0.95); }
+    .manual-cat.active { border-color: #667eea; background: #f0f2ff; color: #667eea; font-weight: 600; }
     .manual-row { display: flex; gap: 10px; }
     .manual-row .sync-input { margin-bottom: 0; }
     .manual-row .manual-date-input { flex: 1.4; min-width: 0; }
@@ -369,7 +373,13 @@
   <div class="modal-overlay" id="manualModal">
     <div class="modal">
       <div class="modal-title">📝 手动补记</div>
-      <div class="modal-sub">忘记计时也能补上今天的打卡</div>
+      <div class="modal-sub">选分类会自动计入每日必做与完成率</div>
+      <div class="manual-cat-row" id="manualCatRow">
+        <button type="button" class="manual-cat" data-val="英语" onclick="pickManualCat('英语', this)">📖 英语</button>
+        <button type="button" class="manual-cat" data-val="练习" onclick="pickManualCat('练习', this)">✏️ 练习</button>
+        <button type="button" class="manual-cat" data-val="运动" onclick="pickManualCat('运动', this)">🏃 运动</button>
+        <button type="button" class="manual-cat" data-val="" onclick="pickManualCat('', this)">其他</button>
+      </div>
       <input type="text" class="sync-input" id="manualName" placeholder="项目名称，如：英语、跑步" maxlength="40" style="ime-mode:auto">
       <div class="manual-row">
         <input type="date" class="sync-input manual-date-input" id="manualDate">
@@ -1060,7 +1070,9 @@ function renderDayRecords(dateStr) {
   const title = document.getElementById('dayRecordTitle');
   if (title && !isNaN(dObj.getTime())) {
     const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
-    title.textContent = `📝 ${dObj.getMonth()+1}月${dObj.getDate()}日（${weekdays[dObj.getDay()]}）记录`;
+    title.textContent = dateStr === getLocalDateStr()
+      ? '📝 今日打卡'
+      : `📝 ${dObj.getMonth()+1}月${dObj.getDate()}日（${weekdays[dObj.getDay()]}）打卡`;
   }
   const checked = !!data.checkins[dateStr];
   const hint = document.getElementById('calendarDayHint');
@@ -1134,8 +1146,22 @@ function openManualCheckin() {
   document.getElementById('manualDate').value = getLocalDateStr();
   document.getElementById('manualMinutes').value = '30';
   document.getElementById('manualResult').innerHTML = '';
+  const cats = document.querySelectorAll('#manualCatRow .manual-cat');
+  cats.forEach(c => c.classList.remove('active'));
   document.getElementById('manualModal').classList.add('show');
 }
+window.pickManualCat = function(text, btn) {
+  const cats = document.querySelectorAll('#manualCatRow .manual-cat');
+  cats.forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const nameEl = document.getElementById('manualName');
+  nameEl.value = text || '';
+  nameEl.focus();
+};
+document.getElementById('manualName').addEventListener('input', () => {
+  const v = document.getElementById('manualName').value.trim();
+  document.querySelectorAll('#manualCatRow .manual-cat').forEach(b => b.classList.toggle('active', b.dataset.val === v));
+});
 function closeManualCheckin() {
   document.getElementById('manualModal').classList.remove('show');
 }
