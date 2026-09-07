@@ -149,6 +149,19 @@
     .stat-item { text-align: center; padding: 16px 6px; background: rgba(255,255,255,0.15); border-radius: 16px; backdrop-filter: blur(10px); }
     .stat-value { font-size: 2rem; font-weight: 700; color: white; }
     .stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.8); margin-top: 4px; }
+    .home-summary-row { display: flex; justify-content: space-between; gap: 8px; background: #fff; border-radius: 16px; padding: 10px 14px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); font-size: 0.8rem; color: #777; }
+    .home-summary-row b { color: #667eea; font-size: 1rem; }
+    .streak-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .stat-item-light { background: #f4f2ff; text-align: center; padding: 12px 4px; border-radius: 14px; }
+    .stat-item-light .stat-value { color: #667eea; font-size: 1.5rem; }
+    .stat-item-light .stat-label { color: #999; font-size: 0.68rem; }
+    .week-chart-title { font-size: 0.78rem; color: #999; margin-bottom: 8px; }
+    .week-chart { display: flex; align-items: flex-end; gap: 6px; height: 130px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+    .bar { width: 70%; min-height: 2px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #667eea, #a78bfa); transition: height 0.4s ease; }
+    .bar-label { font-size: 0.65rem; color: #aaa; margin-top: 4px; }
+    .bar-min { font-size: 0.6rem; color: #bbb; }
+    .bar-col.today .bar-label { color: #667eea; font-weight: 700; }
     .rate-bar-wrap { margin: 16px 0 4px; }
     .rate-bar-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: #999; margin-bottom: 6px; }
     .rate-bar { height: 8px; border-radius: 4px; background: #eee; overflow: hidden; }
@@ -204,6 +217,11 @@
 
   <!-- 专注 -->
   <div class="page active page-timer-compact" id="page-timer">
+    <div class="home-summary-row">
+      <span>📋 今日完成 <b id="homeTodayCount">0</b></span>
+      <span>🔥 连续 <b id="homeStreak">0</b> 天</span>
+      <span>⏱️ 本周 <b id="homeWeekMinutes">0</b> 分</span>
+    </div>
     <div class="card timer-card-compact">
       <div class="timer-task-label" id="timerTaskLabel">选择一个任务开始计时</div>
       <div class="timer-display">
@@ -288,6 +306,16 @@
         <div class="stat-item"><div class="stat-value" id="checkInDays">0</div><div class="stat-label">累计打卡</div></div>
         <div class="stat-item"><div class="stat-value" id="taskRate">0%</div><div class="stat-label">今日完成率</div></div>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔥 坚持数据</div>
+      <div class="streak-grid">
+        <div class="stat-item stat-item-light"><div class="stat-value" id="streakDays">0</div><div class="stat-label">连续打卡(天)</div></div>
+        <div class="stat-item stat-item-light"><div class="stat-value" id="weekFocusMinutes">0</div><div class="stat-label">本周专注(分钟)</div></div>
+        <div class="stat-item stat-item-light"><div class="stat-value" id="totalFocusMinutes">0</div><div class="stat-label">累计专注(分钟)</div></div>
+      </div>
+      <div class="week-chart-title">近 7 天专注分钟</div>
+      <div class="week-chart" id="weekChart"></div>
     </div>
     <div class="card">
       <div class="card-title">📊 基础任务完成率</div>
@@ -929,6 +957,66 @@ document.getElementById('prevMonth2').addEventListener('click', () => { currentM
 document.getElementById('nextMonth2').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendarPage(); });
 
 // ===== 统计 =====
+function setTextIfExists(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function calcStreakDays(data) {
+  const cursor = new Date();
+  // 今天还没打卡也算连续（从昨天开始数），今天已打卡则从今天开始数
+  if (!data.checkins[getLocalDateStr(cursor.getTime())]) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (data.checkins && data.checkins[getLocalDateStr(cursor.getTime())]) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function sumMinutesForDates(data, fromStr, toStr) {
+  return (data.history || []).reduce((sum, h) => {
+    const n = Number(h.time) || 0;
+    return (h.date >= fromStr && h.date <= toStr) ? sum + n : sum;
+  }, 0);
+}
+
+function renderInsights(data) {
+  const today = getLocalDateStr();
+  const now = new Date();
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const weekFrom = getLocalDateStr(weekStart.getTime());
+  const streak = calcStreakDays(data);
+  const weekMinutes = sumMinutesForDates(data, weekFrom, today);
+  const totalMinutes = sumMinutesForDates(data, '1970-01-01', today);
+  const todaySessions = data.tasks.filter(t => t.completed && t.completedAt && getLocalDateStr(t.completedAt) === today).length +
+    DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
+
+  setTextIfExists('homeTodayCount', String(todaySessions));
+  setTextIfExists('homeStreak', String(streak));
+  setTextIfExists('homeWeekMinutes', String(weekMinutes));
+  setTextIfExists('streakDays', String(streak));
+  setTextIfExists('weekFocusMinutes', String(weekMinutes));
+  setTextIfExists('totalFocusMinutes', String(totalMinutes));
+
+  // 近 7 天柱状图
+  const chart = document.getElementById('weekChart');
+  if (!chart) return;
+  const days = [];
+  for (let offset = -6; offset <= 0; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    const ds = getLocalDateStr(d.getTime());
+    days.push({ ds, dow: d.getDay(), isToday: offset === 0 });
+  }
+  const minutes = days.map(day => sumMinutesForDates(data, day.ds, day.ds));
+  const maxMin = Math.max(1, ...minutes);
+  const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
+  chart.innerHTML = days.map((day, i) => {
+    const h = Math.max(2, Math.round((minutes[i] / maxMin) * 100));
+    return `<div class="bar-col${day.isToday ? ' today' : ''}"><span class="bar-min">${minutes[i] || ''}</span><div class="bar" style="height:${h}%"></div><span class="bar-label">${day.isToday ? '今' : weekNames[day.dow]}</span></div>`;
+  }).join('');
+}
+
 function updateStats() {
   const data = loadData();
   const today = getLocalDateStr();
@@ -945,6 +1033,7 @@ function updateStats() {
   const dailyRate = Math.round((dailyDone / 3) * 100);
   document.getElementById('dailyRateText').textContent = dailyDone + '/3';
   document.getElementById('dailyRateFill').style.width = dailyRate + '%';
+  renderInsights(data);
   renderTaskHistory();
 }
 
