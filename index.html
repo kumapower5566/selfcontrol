@@ -770,7 +770,33 @@ function renderDailyModules() {
 
 window.selectDailyModule = function(id) {
   const data = loadData();
-  if (data.dailyFixed[id]) return; // 已完成不能选
+  const moduleMeta = DAILY_FIXED.find(f => f.id === id);
+  if (data.dailyFixed[id]) {
+    // 已完成：允许再点一次取消今天的完成状态
+    if (moduleMeta && window.confirm('「' + moduleMeta.text + '」今天已完成，要取消完成状态吗？')) {
+      delete data.dailyFixed[id];
+      if (currentDailyId === id) {
+        currentDailyId = null;
+        currentTaskIndex = -1;
+        remainingSeconds = currentPreset * 60;
+        updateTimerDisplay();
+        updateTimerTaskLabel();
+      }
+      const today = getLocalDateStr();
+      const hasOtherEvidence = data.tasks.some(t => t.completed && t.completedAt && getLocalDateStr(t.completedAt) === today) ||
+        data.history.some(h => h.date === today) || DAILY_FIXED.some(f => data.dailyFixed[f.id]);
+      if (hasOtherEvidence) data.checkins[today] = true;
+      else delete data.checkins[today];
+      saveData(data);
+      scheduleAutoSync();
+      updateStats();
+      renderDailyModules();
+      renderTasks();
+      renderCalendarPage();
+      renderDayRecords(selectedCalendarDate || today);
+    }
+    return;
+  }
   // 正在计时/已暂停时切换：停止本次计时（不记录）
   clearInterval(timerInterval);
   timerInterval = null;
