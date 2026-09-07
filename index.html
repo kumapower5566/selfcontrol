@@ -121,12 +121,19 @@
     .calendar-nav button:active { background: #eee; transform: scale(0.95); }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
     .calendar-day-name { text-align: center; font-size: 0.78rem; color: #bbb; padding: 7px 0; font-weight: 500; }
-    .calendar-day { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; color: #666; }
+    .calendar-day { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; color: #666; position: relative; }
     .calendar-day.today { font-weight: 700; color: #667eea; background: rgba(102, 126, 234, 0.1); }
     .calendar-day.checked { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; }
+    .calendar-day.checked::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(102,126,234,0.35); }
     .calendar-day.selected { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #667eea; }
     .calendar-day.empty { cursor: default; }
     .calendar-day.future { color: #ccc; cursor: not-allowed; }
+    .calendar-day-hint { text-align: center; font-size: 0.78rem; color: #999; margin-top: 12px; min-height: 18px; }
+    .calendar-day-hint.on { color: #2e7d32; font-weight: 600; }
+    @media (min-width: 620px) {
+      .header, .page { max-width: 520px; margin-left: auto; margin-right: auto; }
+      .bottom-nav { max-width: 520px; margin: 0 auto; border-left: 1px solid rgba(0,0,0,0.06); border-right: 1px solid rgba(0,0,0,0.06); }
+    }
     /* 统计 */
     .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card .card-title { color: rgba(255,255,255,0.75); }
@@ -248,6 +255,7 @@
         </div>
       </div>
       <div class="calendar-grid" id="calendarGrid2"></div>
+      <div class="calendar-day-hint" id="calendarDayHint"></div>
     </div>
     <div class="card">
       <div class="task-history">
@@ -902,6 +910,16 @@ function renderDayRecords(dateStr) {
   }
   const items = data.history.filter(h => h.date === dateStr);
   const checked = !!data.checkins[dateStr];
+  const hint = document.getElementById('calendarDayHint');
+  if (hint) {
+    if (checked) {
+      hint.textContent = '✓ 已打卡';
+      hint.className = 'calendar-day-hint on';
+    } else {
+      hint.textContent = '未打卡';
+      hint.className = 'calendar-day-hint';
+    }
+  }
   if (items.length > 0) {
     el.innerHTML = items.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
     return;
