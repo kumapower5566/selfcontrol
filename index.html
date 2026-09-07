@@ -308,28 +308,13 @@
     </div>
   </div>
 
-  <!-- 同步弹窗 -->
-  <div class="modal-overlay" id="syncModal">
-    <div class="modal">
-      <div class="modal-title">☁️ 同步数据</div>
-      <div class="modal-sub">输入密钥同步数据</div>
-      <input type="password" class="sync-input" id="tokenInput" placeholder="输入你的密钥">
-      <div class="modal-btns">
-        <button class="btn-skip" onclick="closeSyncModal()">取消</button>
-        <button class="btn-confirm" onclick="doSync()">同步</button>
-      </div>
-      <div id="syncResult2"></div>
-    </div>
-  </div>
-
   <!-- 密钥设置弹窗 -->
   <div class="modal-overlay" id="syncSetupModal">
     <div class="modal">
-      <div class="modal-title">🔑 设置同步密钥</div>
-      <div class="modal-sub">首次使用需要绑定 GitHub Token</div>
-      <input type="text" class="sync-input" id="syncPinInput" placeholder="设置简短密钥，如 ABC123" maxlength="8" style="ime-mode:disabled">
+      <div class="modal-title">🔗 连接云端备份</div>
+      <div class="modal-sub">填 GitHub Token 即可，免费且只存本机</div>
       <input type="password" class="sync-input" id="syncTokenInput" placeholder="粘贴 GitHub Token（ghp_xxx）">
-      <div class="sync-hint">密钥用于快速同步，Token 只存本地，不会上传。</div>
+      <div class="sync-hint">Token 只存本机，不会上传。填入后会自动创建或找回你的私有备份，以后每次打开网站自动同步，不用重复填写。忘记旧“密钥”没关系，直接填新 Token 即可。</div>
       <div id="syncSetupResult"></div>
       <div class="modal-btns">
         <button class="btn-skip" onclick="closeSyncSetupModal()">取消</button>
@@ -964,12 +949,10 @@ function flashSyncGlyph(glyph, holdMs) {
 }
 
 function openSyncSetup() {
-  document.getElementById('syncPinInput').value = localStorage.getItem('nengixing_pin') || '';
   document.getElementById('syncTokenInput').value = localStorage.getItem('nengixing_gh_token') || '';
   document.getElementById('syncSetupResult').innerHTML = '';
   document.getElementById('syncSetupModal').classList.add('show');
 }
-function closeSyncModal() { document.getElementById('syncModal').classList.remove('show'); }
 function closeSyncSetupModal() { document.getElementById('syncSetupModal').classList.remove('show'); }
 
 // header同步按钮提示
@@ -1007,6 +990,15 @@ async function readGistContent(token, gistId) {
   if (!gist || !gist.files || !gist.files[GIST_FILE] || !gist.files[GIST_FILE].content) return null;
   try { return JSON.parse(gist.files[GIST_FILE].content); }
   catch(e) { return null; }
+}
+
+async function findBackupGist(token) {
+  // 在本人 Gist 列表里找旧备份（按文件名），换设备也能找回
+  const gists = await ghJson('/gists?per_page=100', token);
+  if (!Array.isArray(gists)) return null;
+  const candidates = gists.filter(g => g && g.files && g.files[GIST_FILE]);
+  candidates.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+  return candidates[0] || null;
 }
 
 async function writeGist(token, gistId, data) {
@@ -1118,7 +1110,16 @@ async function syncWithCloud() {
   try {
     let gistId = localStorage.getItem('nengixing_gist_id') || null;
     const local = loadData();
-    const remote = gistId ? await readGistContent(token, gistId) : null;
+    let remote = gistId ? await readGistContent(token, gistId) : null;
+    // 本地没记录 gist 或原 gist 失效时，自动搜索云端旧备份
+    if (!remote) {
+      const found = await findBackupGist(token);
+      if (found) {
+        gistId = found.id;
+        localStorage.setItem('nengixing_gist_id', gistId);
+        remote = await readGistContent(token, gistId);
+      }
+    }
     const merged = mergeCloudData(local, remote);
     const changed = JSON.stringify(merged) !== JSON.stringify(local);
     if (changed) saveData(merged);
@@ -1152,36 +1153,18 @@ async function doSyncDirect() {
   }
 }
 
-async function doSync() {
-  const pin = document.getElementById('tokenInput').value.trim();
-  const savedPin = localStorage.getItem('nengixing_pin');
-  const savedToken = localStorage.getItem('nengixing_gh_token');
-  const resultEl = document.getElementById('syncResult2');
-  if (pin !== savedPin) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥错误</div>`; return; }
-  resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
-  try {
-    await syncWithCloud();
-    resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！</div>';
-    setTimeout(closeSyncModal, 1200);
-  } catch(err) {
-    resultEl.innerHTML = `<div class="sync-result error">❌ 同步失败：${err.message}</div>`;
-  }
-}
 async function saveSyncSetup() {
-  const pin = document.getElementById('syncPinInput').value.trim();
   const token = document.getElementById('syncTokenInput').value.trim();
   const resultEl = document.getElementById('syncSetupResult');
-  if (!pin || pin.length < 3) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥至少3位</div>`; return; }
   if (!token || !(token.startsWith('ghp_') || token.startsWith('github_pat_'))) { resultEl.innerHTML = `<div class="sync-result error">❌ 请输入正确的 GitHub Token（ghp_ 或 github_pat_ 开头）</div>`; return; }
   resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在验证 Token...</div>';
   try {
     await ghJson('/gists', token);
-    localStorage.setItem('nengixing_pin', pin);
     localStorage.setItem('nengixing_gh_token', token);
-    resultEl.innerHTML = '<div class="sync-result success">✅ 设置成功！之后每次打开网站会自动同步备份</div>';
+    resultEl.innerHTML = '<div class="sync-result success">✅ 连接成功！正在同步备份...</div>';
     setTimeout(() => { closeSyncSetupModal(); doSyncDirect(); }, 1000);
   } catch(err) {
-    resultEl.innerHTML = `<div class="sync-result error">❌ Token 无效</div>`;
+    resultEl.innerHTML = '<div class="sync-result error">❌ Token 无效或无 gist 权限</div>';
   }
 }
 
