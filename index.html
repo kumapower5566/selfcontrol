@@ -457,14 +457,17 @@ function loadData() {
   return data;
 }
 function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
+function markDataUpdated(data) { data.updatedAt = Date.now(); }
 
 // 零点重置每日固定项目
 function checkDailyReset() {
   const today = getLocalDateStr();
   const data = loadData();
   if (data.dailyFixedDate !== today) {
+    const hadData = hasAnyData(data);
     data.dailyFixed = {};
     data.dailyFixedDate = today;
+    if (hadData) markDataUpdated(data);
     saveData(data);
   }
 }
@@ -477,6 +480,7 @@ function autoCheckin() {
   const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
   if ((hasTask || dailyDone > 0) && !data.checkins[today]) {
     data.checkins[today] = true;
+    markDataUpdated(data);
     saveData(data);
     updateStats();
   }
@@ -710,6 +714,7 @@ function finishAndSave(minutes, note) {
   if (note) historyText = historyText + ' → ' + note;
   data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now() });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
+  markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   autoCheckin();
@@ -760,7 +765,7 @@ function renderDailyModules() {
       const isDone = !!data.dailyFixed[id];
       const isSelected = currentDailyId === id;
       const isTiming = isSelected && isRunning;
-      mod.className = 'daily-module' + (isDone ? ' completed' : isTiming ? ' timing' : isSelected ? ' selected' : '');
+      mod.className = 'daily-module' + (isDone ? ' completed' : '') + (isTiming ? ' timing' : isSelected ? ' selected' : '');
       if (isDone && !mod.querySelector('.daily-module-check')) {
         mod.insertAdjacentHTML('afterbegin', '<div class="daily-module-check">✓</div>');
       }
@@ -770,33 +775,6 @@ function renderDailyModules() {
 
 window.selectDailyModule = function(id) {
   const data = loadData();
-  const moduleMeta = DAILY_FIXED.find(f => f.id === id);
-  if (data.dailyFixed[id]) {
-    // 已完成：允许再点一次取消今天的完成状态
-    if (moduleMeta && window.confirm('「' + moduleMeta.text + '」今天已完成，要取消完成状态吗？')) {
-      delete data.dailyFixed[id];
-      if (currentDailyId === id) {
-        currentDailyId = null;
-        currentTaskIndex = -1;
-        remainingSeconds = currentPreset * 60;
-        updateTimerDisplay();
-        updateTimerTaskLabel();
-      }
-      const today = getLocalDateStr();
-      const hasOtherEvidence = data.tasks.some(t => t.completed && t.completedAt && getLocalDateStr(t.completedAt) === today) ||
-        data.history.some(h => h.date === today) || DAILY_FIXED.some(f => data.dailyFixed[f.id]);
-      if (hasOtherEvidence) data.checkins[today] = true;
-      else delete data.checkins[today];
-      saveData(data);
-      scheduleAutoSync();
-      updateStats();
-      renderDailyModules();
-      renderTasks();
-      renderCalendarPage();
-      renderDayRecords(selectedCalendarDate || today);
-    }
-    return;
-  }
   // 正在计时/已暂停时切换：停止本次计时（不记录）
   clearInterval(timerInterval);
   timerInterval = null;
@@ -828,6 +806,7 @@ document.getElementById('addTaskBtn').addEventListener('click', () => {
   if (!text) return;
   const data = loadData();
   data.tasks.unshift({ text, completed: false, createdAt: Date.now() });
+  markDataUpdated(data);
   saveData(data);
   taskInput.value = '';
   renderTasks();
@@ -886,6 +865,7 @@ window.toggleTask = function(i) {
     currentTaskIndex = -1;
     updateTimerTaskLabel();
   }
+  markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   if (task.completed) maybeShowSyncRemind();
@@ -903,6 +883,7 @@ window.deleteTask = function(i) {
   }
   const data = loadData();
   data.tasks.splice(i, 1);
+  markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   renderTasks();
@@ -1037,7 +1018,7 @@ function scheduleAutoSync() {
   autoSyncDebounce = setTimeout(() => {
     autoSyncDebounce = null;
     autoSyncQuiet();
-  }, 4000);
+  }, 1500);
 }
 
 function maybeShowSyncRemind() {
@@ -1079,6 +1060,7 @@ window.saveManualCheckin = function() {
   data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now() });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   data.checkins[dateStr] = true;
+  markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   updateStats();
@@ -1137,6 +1119,7 @@ window.saveEditRecord = function() {
   data.history[idx] = { ...data.history[idx], text: name, time: minutes, date: dateStr };
   cleanupCheckinForDate(data, oldDate);
   data.checkins[dateStr] = true;
+  markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   updateStats();
@@ -1152,6 +1135,7 @@ window.deleteHistoryItem = function(idx) {
   if (!window.confirm('确定删除这条打卡记录吗？')) return;
   data.history.splice(idx, 1);
   cleanupCheckinForDate(data, h.date);
+  markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   updateStats();
@@ -1349,13 +1333,48 @@ async function syncWithCloud() {
         remote = await readGistContent(token, gistId);
       }
     }
-    const merged = mergeCloudData(local, remote);
-    const changed = JSON.stringify(merged) !== JSON.stringify(local);
-    if (changed) saveData(merged);
-    if (hasAnyData(merged) && (!remote || changed || !gistId)) {
-      gistId = await writeGist(token, gistId, merged);
+    const localHas = hasAnyData(local);
+    const remoteHas = hasAnyData(remote);
+    const localTs = Number(local.updatedAt || 0);
+    const remoteTs = Number(remote.updatedAt || 0);
+
+    // 云端还没有备份：把本机数据上传
+    if (!remote) {
+      if (localHas) gistId = await writeGist(token, gistId, local);
+      return { ok: true, changed: false };
     }
-    return { ok: true, changed };
+
+    // 全新浏览器/设备（本机从未有过内容）：直接恢复云端备份
+    if (!localHas && remoteHas && !localTs) {
+      const restored = { ...remote };
+      restored.updatedAt = Date.now();
+      saveData(restored);
+      gistId = await writeGist(token, gistId, restored);
+      return { ok: true, changed: true, restored: true };
+    }
+
+    // 本机内容为空但有操作时间戳：说明用户删光了，以空为准并同步到云端
+    if (!localHas && remoteHas && localTs) {
+      gistId = await writeGist(token, gistId, local);
+      return { ok: true, changed: true };
+    }
+
+    // 本机没有内容、云端也没有内容：无事可做
+    if (!localHas && !remoteHas) return { ok: true, changed: false };
+
+    // 两边都有内容：谁的时间戳新就以谁为准（旧数据没时间戳时以本机为准），
+    // 保证“删除/修改”不会被云端旧记录合并回来
+    if (remoteHas && remoteTs > localTs) {
+      const adopted = { ...remote };
+      adopted.updatedAt = Date.now();
+      saveData(adopted);
+      gistId = await writeGist(token, gistId, adopted);
+      return { ok: true, changed: true, restored: true };
+    }
+
+    // 本机较新（或版本信息缺失）：直接覆盖云端
+    if (localHas) gistId = await writeGist(token, gistId, local);
+    return { ok: true, changed: false };
   } finally {
     syncing = false;
   }
