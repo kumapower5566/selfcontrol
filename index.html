@@ -191,12 +191,13 @@
       </div>
       <div class="timer-presets">
         <button class="preset-btn active" data-minutes="25">25分钟</button>
+        <button class="preset-btn" data-minutes="30">30分钟</button>
         <button class="preset-btn" data-minutes="45">45分钟</button>
         <button class="preset-btn" data-minutes="60">60分钟</button>
       </div>
       <div class="timer-buttons">
         <button class="btn btn-primary" id="startBtn" disabled>开始</button>
-        <button class="btn btn-secondary" id="resetBtn" style="display:none">暂停</button>
+        <button class="btn btn-secondary" id="resetBtn" style="display:none">重置</button>
         <button class="btn btn-danger" id="endBtn" style="display:none">结束</button>
       </div>
     </div>
@@ -210,14 +211,17 @@
         <div class="daily-module" onclick="selectDailyModule('word')">
           <div class="daily-module-icon">📖</div>
           <div class="daily-module-text">英语单词</div>
+          <div class="daily-module-time">30分钟</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('exercise')">
           <div class="daily-module-icon">✏️</div>
           <div class="daily-module-text">英语习题</div>
+          <div class="daily-module-time">30分钟</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('skill')">
           <div class="daily-module-icon">🎨</div>
           <div class="daily-module-text">软件/艺术积累</div>
+          <div class="daily-module-time">30分钟</div>
         </div>
       </div>
     </div>
@@ -255,11 +259,11 @@
   <!-- 统计 -->
   <div class="page" id="page-stats">
     <div class="card stats-card">
-      <div class="card-title">✨ 本周成就</div>
+      <div class="card-title">✨ 我的数据</div>
       <div class="stats-grid">
-        <div class="stat-item"><div class="stat-value" id="totalFocus">0</div><div class="stat-label">已完成任务</div></div>
-        <div class="stat-item"><div class="stat-value" id="checkInDays">0</div><div class="stat-label">打卡天数</div></div>
-        <div class="stat-item"><div class="stat-value" id="taskRate">0%</div><div class="stat-label">完成率</div></div>
+        <div class="stat-item"><div class="stat-value" id="totalFocus">0</div><div class="stat-label">今日完成</div></div>
+        <div class="stat-item"><div class="stat-value" id="checkInDays">0</div><div class="stat-label">累计打卡</div></div>
+        <div class="stat-item"><div class="stat-value" id="taskRate">0%</div><div class="stat-label">今日完成率</div></div>
       </div>
     </div>
     <div class="card">
@@ -328,9 +332,9 @@
 <script>
 // ===== 常量 =====
 const DAILY_FIXED = [
-  { id: 'word', text: '英语单词', time: '30分钟', icon: '📖' },
-  { id: 'exercise', text: '英语习题', time: '30分钟', icon: '✏️' },
-  { id: 'skill', text: '软件/艺术积累', time: '30分钟', icon: '🎨' }
+  { id: 'word', text: '英语单词', minutes: 30, icon: '📖' },
+  { id: 'exercise', text: '英语习题', minutes: 30, icon: '✏️' },
+  { id: 'skill', text: '软件/艺术积累', minutes: 30, icon: '🎨' }
 ];
 const DATA_KEY = 'focus_clock_data_v5';
 
@@ -374,7 +378,7 @@ navItems.forEach(item => {
       syncBtn.classList.add('hide');
       header.classList.add('compact');
     }
-    if (t === 'calendar') { renderCalendarPage(); renderCalendar(); renderTaskHistory2(); }
+    if (t === 'calendar') { renderCalendarPage(); renderTaskHistory2(); }
     if (t === 'stats') { updateStats(); }
     if (t === 'timer') { renderTasks(); renderDailyModules(); updateTimerTaskLabel(); }
   });
@@ -419,7 +423,6 @@ function autoCheckin() {
     data.checkins[today] = true;
     saveData(data);
     updateStats();
-    renderCalendar();
   }
 }
 
@@ -428,8 +431,6 @@ let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
 let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
 let currentTaskIndex = -1;
 let currentDailyId = null; // 当前选择的每日必做ID
-let overtimeSeconds = 0; // 超过的时间（秒）
-let overtimeInterval = null; // 超时计时器
 const timerDisplay = document.getElementById('timerDisplay');
 const timerStatus = document.getElementById('timerStatus');
 const timerTaskLabel = document.getElementById('timerTaskLabel');
@@ -439,7 +440,10 @@ const endBtn = document.getElementById('endBtn');
 const presetBtns = document.querySelectorAll('.preset-btn');
 
 function formatTime(s) { return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }
-function updateTimerDisplay() { timerDisplay.textContent = formatTime(remainingSeconds); }
+function updatePageTitle() {
+  document.title = (isRunning && remainingSeconds > 0) ? formatTime(remainingSeconds) + ' · 专注' : '你能行 - 专注时钟';
+}
+function updateTimerDisplay() { timerDisplay.textContent = formatTime(remainingSeconds); updatePageTitle(); }
 
 function updateTimerTaskLabel() {
   const moduleItem = DAILY_FIXED.find(f => f.id === currentDailyId);
@@ -462,103 +466,162 @@ function updateTimerTaskLabel() {
   }
 }
 
+// 完成提醒（声音 / 震动 / 浏览器通知）
+let audioCtx = null;
+function playCompleteSound() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audioCtx) audioCtx = new Ctx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const notes = [880, 1174.66, 1567.98];
+    notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const t = audioCtx.currentTime + i * 0.22;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      osc.start(t);
+      osc.stop(t + 0.65);
+    });
+  } catch(e) { /* 忽略声音失败 */ }
+}
+function primeAudioForGesture() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audioCtx) audioCtx = new Ctx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e) { /* 忽略 */ }
+}
+function ensureNotificationPermission() {
+  try {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  } catch(e) {}
+}
+function notifyComplete(minutes) {
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const data = loadData();
+      let name = '';
+      if (currentTaskIndex >= 0 && data.tasks[currentTaskIndex]) name = data.tasks[currentTaskIndex].text;
+      else if (currentDailyId) {
+        const f = DAILY_FIXED.find(x => x.id === currentDailyId);
+        name = f ? f.text : '';
+      }
+      new Notification('🎉 专注完成！', { body: (name ? name + ' · ' : '') + '完成 ' + minutes + ' 分钟专注', tag: 'focus-done' });
+    }
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  } catch(e) { /* 忽略通知失败 */ }
+}
+
+function setTimerControlsRunning() {
+  startBtn.textContent = '暂停';
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'inline-block';
+}
+function setTimerControlsPaused() {
+  startBtn.textContent = '继续';
+  resetBtn.style.display = 'inline-block';
+  resetBtn.textContent = '重置';
+  endBtn.style.display = 'inline-block';
+}
+function setTimerControlsIdle(statusText) {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  isRunning = false;
+  timerStartTime = null;
+  timerInitialSeconds = null;
+  timerDisplay.style.color = '';
+  startBtn.textContent = '开始';
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'none';
+  timerStatus.textContent = statusText || '选择任务，开始专注';
+  updatePageTitle();
+}
+
 function startTimer() {
   if (currentTaskIndex < 0 && !currentDailyId) return;
+  if (startBtn.disabled) return;
   if (isRunning) {
+    // 暂停
     clearInterval(timerInterval);
+    timerInterval = null;
     isRunning = false;
-    startBtn.textContent = '继续';
-    resetBtn.textContent = '取消';
+    setTimerControlsPaused();
     timerStatus.textContent = '已暂停';
+    updatePageTitle();
     return;
   }
+  ensureNotificationPermission();
+  primeAudioForGesture();
   isRunning = true;
-  startBtn.textContent = '暂停';
+  setTimerControlsRunning();
   timerStatus.textContent = '专注中...';
-  resetBtn.style.display = 'inline-block';
-  resetBtn.textContent = '暂停';
-  endBtn.style.display = 'inline-block';
   timerStartTime = Date.now();
   timerInitialSeconds = remainingSeconds;
   timerInterval = setInterval(() => {
-    remainingSeconds = Math.max(0, timerInitialSeconds - Math.floor((Date.now() - timerStartTime) / 1000));
+    const elapsedSeconds = Math.floor((Date.now() - timerStartTime) / 1000);
+    remainingSeconds = Math.max(0, timerInitialSeconds - elapsedSeconds);
     updateTimerDisplay();
     if (remainingSeconds === 0) {
-      // 倒计时结束，开始正向计时
       clearInterval(timerInterval);
-      overtimeSeconds = 0;
-      timerStatus.textContent = '超时继续...';
-      timerDisplay.style.color = '#e74c3c'; // 红色警示
-      overtimeInterval = setInterval(() => {
-        overtimeSeconds++;
-        const mins = Math.floor(overtimeSeconds / 60);
-        const secs = overtimeSeconds % 60;
-        timerDisplay.textContent = `${(currentPreset + mins).toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-      }, 1000);
+      timerInterval = null;
+      onTimerComplete(currentPreset);
     }
-  }, 1000);
+  }, 250);
 }
 
 function resetTimer() {
-  clearInterval(timerInterval);
-  clearInterval(overtimeInterval);
-  isRunning = false;
-  overtimeSeconds = 0;
   remainingSeconds = currentPreset * 60;
-  timerStartTime = null; timerInitialSeconds = null;
+  setTimerControlsIdle('选择任务，开始专注');
   updateTimerDisplay();
-  timerDisplay.style.color = ''; // 恢复默认颜色
-  startBtn.textContent = '开始';
-  timerStatus.textContent = '选择任务，开始专注';
-  resetBtn.style.display = 'none';
-  endBtn.style.display = 'none';
   renderTasks();
   renderDailyModules();
 }
 
-function endTimerEarly() {
-  if (!isRunning && remainingSeconds === currentPreset * 60 && overtimeSeconds === 0) return;
+function openFinishModal(minutes) {
   clearInterval(timerInterval);
-  clearInterval(overtimeInterval);
+  timerInterval = null;
   isRunning = false;
-  // 计算总专注时间（包括超时）
-  const timerInitial = timerInitialSeconds !== null ? timerInitialSeconds : currentPreset * 60;
-  const elapsedSeconds = timerInitial - remainingSeconds + overtimeSeconds;
-  const minutes = Math.max(1, Math.floor(elapsedSeconds / 60));
-  overtimeSeconds = 0;
-  timerDisplay.style.color = ''; // 恢复默认颜色
-  // 显示弹窗让用户记录
+  remainingSeconds = currentPreset * 60;
+  timerStartTime = null;
+  timerInitialSeconds = null;
+  updateTimerDisplay();
+  startBtn.textContent = '开始';
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'none';
+  timerStatus.textContent = '太棒了！完成一次专注 🎉';
   document.getElementById('finishMinutes').textContent = minutes;
   document.getElementById('finishNote').value = '';
   document.getElementById('finishModal').classList.add('show');
 }
 
-function onTimerComplete(minutes, showModal) {
-  clearInterval(overtimeInterval);
-  overtimeSeconds = 0;
-  startBtn.textContent = '开始';
-  timerStatus.textContent = '太棒了！完成一次专注 🎉';
-  remainingSeconds = currentPreset * 60;
-  timerStartTime = null; timerInitialSeconds = null;
-  timerDisplay.style.color = ''; // 恢复默认颜色
-  resetBtn.style.display = 'none';
-  endBtn.style.display = 'none';
-  updateTimerDisplay();
-  if (showModal) {
-    document.getElementById('finishMinutes').textContent = minutes;
-    document.getElementById('finishModal').classList.add('show');
-  } else {
-    finishAndSave(minutes, '');
-  }
+function onTimerComplete(minutes) {
+  playCompleteSound();
+  notifyComplete(minutes);
+  openFinishModal(minutes);
+}
+
+function endTimerEarly() {
+  if (timerStartTime === null || timerInitialSeconds === null) return;
+  const elapsedSeconds = Math.max(0, timerInitialSeconds - remainingSeconds);
+  if (elapsedSeconds < 1) return;
+  const minutes = Math.max(1, Math.floor(elapsedSeconds / 60));
+  openFinishModal(minutes);
 }
 
 function closeFinishModal(skip) {
   const note = skip ? '' : document.getElementById('finishNote').value.trim();
   document.getElementById('finishModal').classList.remove('show');
   document.getElementById('finishNote').value = '';
-  if (!skip && note) {
-    // 记录已保存
-  }
   finishAndSave(parseInt(document.getElementById('finishMinutes').textContent) || currentPreset, note);
 }
 
@@ -589,19 +652,19 @@ function finishAndSave(minutes, note) {
   let historyText = taskText || '专注' + minutes + '分钟';
   if (note) historyText = historyText + ' → ' + note;
   data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now() });
-  if (data.history.length > 50) data.history = data.history.slice(0, 50);
+  if (data.history.length > 100) data.history = data.history.slice(0, 100);
   saveData(data);
   autoCheckin();
-  updateStats();
   currentTaskIndex = -1;
+  setTimerControlsIdle('专注记录已保存 ✅');
+  updateTimerDisplay();
   updateTimerTaskLabel();
   renderTasks();
   renderDailyModules();
-  renderCalendar();
+  updateStats();
   renderTaskHistory();
   renderTaskHistory2();
-  timerStatus.textContent = '专注记录已保存 ✅';
-  setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2000);
+  setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2500);
 }
 
 presetBtns.forEach(btn => {
@@ -634,6 +697,8 @@ function renderDailyModules() {
       if (!id) return;
       const f = DAILY_FIXED.find(x => x.id === id);
       if (!f) return;
+      const timeEl = mod.querySelector('.daily-module-time');
+      if (timeEl) timeEl.textContent = f.minutes + '分钟';
       const isDone = !!data.dailyFixed[id];
       const isSelected = currentDailyId === id;
       const isTiming = isSelected && isRunning;
@@ -648,14 +713,24 @@ function renderDailyModules() {
 window.selectDailyModule = function(id) {
   const data = loadData();
   if (data.dailyFixed[id]) return; // 已完成不能选
-  if (isRunning) {
-    // 正在计时中切换：先停止
-    clearInterval(timerInterval);
-    isRunning = false;
-  }
+  // 正在计时/已暂停时切换：停止本次计时（不记录）
+  clearInterval(timerInterval);
+  timerInterval = null;
+  isRunning = false;
+  timerStartTime = null;
+  timerInitialSeconds = null;
   currentDailyId = currentDailyId === id ? null : id;
   currentTaskIndex = -1; // 清除任务选择
+  const moduleItem = DAILY_FIXED.find(f => f.id === currentDailyId);
+  if (moduleItem) {
+    currentPreset = moduleItem.minutes;
+    presetBtns.forEach(b => b.classList.toggle('active', parseInt(b.dataset.minutes) === moduleItem.minutes));
+  }
   remainingSeconds = currentPreset * 60;
+  startBtn.textContent = '开始';
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'none';
+  timerStatus.textContent = '选择任务，开始专注';
   updateTimerDisplay();
   updateTimerTaskLabel();
   renderDailyModules();
@@ -697,10 +772,19 @@ function renderTasks() {
 }
 
 window.startTaskTimer = function(i) {
-  if (isRunning) { clearInterval(timerInterval); isRunning = false; }
+  const data = loadData();
+  if (!data.tasks[i] || data.tasks[i].completed) return;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  isRunning = false;
+  timerStartTime = null;
+  timerInitialSeconds = null;
   currentTaskIndex = i;
   currentDailyId = null; // 清除每日必做选择
   remainingSeconds = currentPreset * 60;
+  startBtn.textContent = '开始';
+  resetBtn.style.display = 'none';
+  endBtn.style.display = 'none';
   updateTimerDisplay();
   updateTimerTaskLabel();
   renderTasks();
@@ -713,6 +797,11 @@ window.toggleTask = function(i) {
   const task = data.tasks[i];
   task.completed = !task.completed;
   if (task.completed) task.completedAt = Date.now();
+  if (task.completed && i === currentTaskIndex) {
+    // 当前选中任务被手动完成，清空选择
+    currentTaskIndex = -1;
+    updateTimerTaskLabel();
+  }
   saveData(data);
   renderTasks();
   autoCheckin();
@@ -720,9 +809,9 @@ window.toggleTask = function(i) {
 };
 window.deleteTask = function(i) {
   if (i === currentTaskIndex) {
-    if (isRunning) { clearInterval(timerInterval); isRunning = false; }
     currentTaskIndex = -1;
     remainingSeconds = currentPreset * 60;
+    setTimerControlsIdle();
     updateTimerDisplay();
     updateTimerTaskLabel();
   }
@@ -732,16 +821,17 @@ window.deleteTask = function(i) {
   renderTasks();
 };
 
-// ===== 打卡日历（专注页内嵌 - 不可手动点击）=====
+// ===== 打卡日历（只读浏览，不可手动点击）=====
 let currentMonth = new Date();
 
-function buildCalendarHTML(year, month, gridId) {
+function renderCalendarPage() {
+  const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
   const today = new Date();
   const todayStr = getLocalDateStr();
   const data = loadData();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  document.getElementById(gridId === 'calendarGrid' ? 'calendarMonth' : 'calendarMonth2').textContent = `${year}年 ${month + 1}月`;
+  document.getElementById('calendarMonth2').textContent = `${year}年 ${month + 1}月`;
   let html = '';
   ['日','一','二','三','四','五','六'].forEach(d => { html += `<div class="calendar-day-name">${d}</div>`; });
   for (let i = 0; i < firstDay; i++) html += '<div class="calendar-day empty"></div>';
@@ -757,37 +847,29 @@ function buildCalendarHTML(year, month, gridId) {
     // 不加 onclick，禁止手动点击
     html += `<div class="${cls}">${d}</div>`;
   }
-  document.getElementById(gridId).innerHTML = html;
+  document.getElementById('calendarGrid2').innerHTML = html;
 }
 
-function renderCalendar() {
-  const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
-  buildCalendarHTML(year, month, 'calendarGrid');
-}
-
-function renderCalendarPage() {
-  const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
-  buildCalendarHTML(year, month, 'calendarGrid2');
-}
-
-document.getElementById('prevMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()-1); renderCalendar(); renderCalendarPage(); });
-document.getElementById('nextMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendar(); renderCalendarPage(); });
-document.getElementById('prevMonth2').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()-1); renderCalendar(); renderCalendarPage(); });
-document.getElementById('nextMonth2').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendar(); renderCalendarPage(); });
+document.getElementById('prevMonth2').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()-1); renderCalendarPage(); });
+document.getElementById('nextMonth2').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendarPage(); });
 
 // ===== 统计 =====
 function updateStats() {
   const data = loadData();
   const today = getLocalDateStr();
-  const todayTasks = data.tasks.filter(t => t.completedAt && getLocalDateStr(t.completedAt) === today).length;
+  const completedCustomToday = data.tasks.filter(t => t.completedAt && getLocalDateStr(t.completedAt) === today).length;
+  const pendingCustom = data.tasks.filter(t => !t.completed).length;
   const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
-  const total = todayTasks + dailyDone;
+  const total = completedCustomToday + dailyDone;
+  // 今日目标 = 3 项每日必做 + 未完成/今日完成的自定义任务
+  const planned = 3 + pendingCustom + completedCustomToday;
+  const rate = planned > 0 ? Math.round((total / planned) * 100) : 0;
   document.getElementById('totalFocus').textContent = total;
   document.getElementById('checkInDays').textContent = Object.values(data.checkins).filter(Boolean).length;
-  const rate = Math.round((dailyDone / 3) * 100);
   document.getElementById('taskRate').textContent = rate + '%';
+  const dailyRate = Math.round((dailyDone / 3) * 100);
   document.getElementById('dailyRateText').textContent = dailyDone + '/3';
-  document.getElementById('dailyRateFill').style.width = rate + '%';
+  document.getElementById('dailyRateFill').style.width = dailyRate + '%';
   renderTaskHistory();
 }
 
@@ -817,20 +899,22 @@ function renderTaskHistory2() {
 
 // ===== 同步 =====
 const GIST_FILE = 'nengixing-data.json';
-function renderSyncUI() {
-  const area = document.getElementById('syncSetupArea');
-  const hint = document.getElementById('syncHint');
-  const savedPin = localStorage.getItem('nengixing_pin');
-  if (savedPin) {
-    hint.textContent = `已设置密钥：${savedPin}。点击按钮直接同步，不用每次输入。`;
-    area.innerHTML = `<button class="sync-btn" id="syncBtn">☁️ 同步数据</button><button class="sync-btn" id="changePinBtn" style="margin-top:8px;background:linear-gradient(135deg,#e0e0e0,#c0c0c0);color:#555">🔑 更换密钥</button>`;
-    document.getElementById('syncBtn').addEventListener('click', doSyncDirect);
-    document.getElementById('changePinBtn').addEventListener('click', openSyncSetup);
-  } else {
-    hint.textContent = '设定一个简短密钥（如 ABC123），以后输入密钥就能同步。换设备也不怕丢。';
-    area.innerHTML = `<button class="sync-btn" id="syncBtn" onclick="openSyncSetup()">🔑 设置同步密钥</button>`;
+let syncing = false;
+let syncGlyphTimer = null;
+
+function flashSyncGlyph(glyph, holdMs) {
+  const btn = document.getElementById('headerSyncBtn');
+  if (!btn) return;
+  if (syncGlyphTimer) clearTimeout(syncGlyphTimer);
+  btn.textContent = glyph;
+  if (holdMs !== 0) {
+    syncGlyphTimer = setTimeout(() => {
+      const b = document.getElementById('headerSyncBtn');
+      if (b) b.textContent = '☁️';
+    }, holdMs || 1600);
   }
 }
+
 function openSyncSetup() {
   document.getElementById('syncPinInput').value = localStorage.getItem('nengixing_pin') || '';
   document.getElementById('syncTokenInput').value = localStorage.getItem('nengixing_gh_token') || '';
@@ -842,37 +926,181 @@ function closeSyncSetupModal() { document.getElementById('syncSetupModal').class
 
 // header同步按钮提示
 document.getElementById('headerSyncBtn').addEventListener('click', () => {
-  const savedPin = localStorage.getItem('nengixing_pin');
-  if (!savedPin) {
-    openSyncSetup();
-  } else {
-    doSyncDirect();
-  }
+  if (!localStorage.getItem('nengixing_gh_token')) openSyncSetup();
+  else doSyncDirect();
 });
 
-async function doSyncDirect() {
-  const token = localStorage.getItem('nengixing_gh_token');
-  const gistId = localStorage.getItem('nengixing_gist_id');
-  const btn = document.getElementById('headerSyncBtn');
-  if (!token) { openSyncSetup(); return; }
-  btn.textContent = '⟳';
-  try {
-    const localData = loadData();
-    const payload = JSON.stringify(localData, null, 2);
-    if (gistId) {
-      const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
-      existing.files[GIST_FILE] = { content: payload };
-      await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
-    } else {
-      const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
-      if (!res.id) throw new Error(res.message || '创建失败');
-      localStorage.setItem('nengixing_gist_id', res.id);
+async function ghJson(path, token, options = {}) {
+  const res = await fetch('https://api.github.com' + path, {
+    method: options.method || 'GET',
+    headers: {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github.v3+json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {})
+    },
+    body: options.body
+  });
+  if (res.status === 404 && options.allow404) return null;
+  if (!res.ok) {
+    let message = '请求失败（' + res.status + '）';
+    try {
+      const data = await res.json();
+      if (data && data.message) message = data.message;
+    } catch(e) {}
+    throw new Error(message);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function readGistContent(token, gistId) {
+  if (!gistId) return null;
+  const gist = await ghJson('/gists/' + gistId, token, { allow404: true });
+  if (!gist || !gist.files || !gist.files[GIST_FILE] || !gist.files[GIST_FILE].content) return null;
+  try { return JSON.parse(gist.files[GIST_FILE].content); }
+  catch(e) { return null; }
+}
+
+async function writeGist(token, gistId, data) {
+  const payload = JSON.stringify(data);
+  if (gistId) {
+    try {
+      await ghJson('/gists/' + gistId, token, {
+        method: 'PATCH',
+        body: JSON.stringify({ files: { [GIST_FILE]: { content: payload } } })
+      });
+      return gistId;
+    } catch(e) { /* gist 可能已被删除，走新建分支 */ }
+  }
+  const created = await ghJson('/gists', token, {
+    method: 'POST',
+    body: JSON.stringify({
+      description: '你能行-专注时钟数据备份（自动）',
+      public: false,
+      files: { [GIST_FILE]: { content: payload } }
+    })
+  });
+  localStorage.setItem('nengixing_gist_id', created.id);
+  return created.id;
+}
+
+function isPlainObject(v) { return v && typeof v === 'object' && !Array.isArray(v); }
+
+function mergeTasks(localTasks, remoteTasks) {
+  const localList = Array.isArray(localTasks) ? localTasks.map(t => ({ ...t })) : [];
+  const remoteList = Array.isArray(remoteTasks) ? remoteTasks : [];
+  if (localList.length === 0) return remoteList.map(t => ({ ...t }));
+  const byCreated = new Map(localList.map(t => [String(t.createdAt || ''), t]));
+  remoteList.forEach(rt => {
+    if (!rt || typeof rt !== 'object') return;
+    const key = String(rt.createdAt || '');
+    const match = byCreated.get(key);
+    if (match) {
+      // 同一任务：以“已完成”状态优先，避免丢打卡
+      if (rt.completed && !match.completed) {
+        match.completed = true;
+        if (rt.completedAt) match.completedAt = rt.completedAt;
+      }
+      return;
     }
-    btn.textContent = '✓';
-    setTimeout(() => { btn.textContent = '☁️'; }, 1500);
+    const dup = localList.find(t => t.text === rt.text);
+    if (dup) {
+      if (rt.completed && !dup.completed) {
+        dup.completed = true;
+        if (rt.completedAt) dup.completedAt = rt.completedAt;
+      }
+      return;
+    }
+    localList.push({ ...rt });
+  });
+  return localList;
+}
+
+function mergeCheckins(localCheckins, remoteCheckins) {
+  const out = {};
+  const sources = [remoteCheckins, localCheckins];
+  sources.forEach(src => {
+    if (!isPlainObject(src)) return;
+    Object.keys(src).forEach(k => { if (src[k]) out[k] = true; });
+  });
+  return out;
+}
+
+function mergeHistory(localHistory, remoteHistory) {
+  const seen = new Set();
+  const out = [];
+  [remoteHistory, localHistory].forEach(list => {
+    if (!Array.isArray(list)) return;
+    list.forEach(h => {
+      if (!h || typeof h !== 'object') return;
+      const key = h.ts ? 't' + h.ts : (h.date || '') + '|' + (h.text || '') + '|' + (h.time || '');
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(h);
+    });
+  });
+  out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  return out.slice(0, 200);
+}
+
+function mergeCloudData(local, remote) {
+  const today = getLocalDateStr();
+  const out = { ...local };
+  out.tasks = mergeTasks(local.tasks, remote ? remote.tasks : []);
+  // 每日必做只在“两边都还是今天”时合并，避免把昨天的完成误算到今天
+  const localToday = (local.dailyFixedDate === today && isPlainObject(local.dailyFixed)) ? local.dailyFixed : {};
+  const remoteToday = (remote && remote.dailyFixedDate === today && isPlainObject(remote.dailyFixed)) ? remote.dailyFixed : {};
+  out.dailyFixed = { ...remoteToday, ...localToday };
+  out.dailyFixedDate = today;
+  out.checkins = mergeCheckins(local.checkins, remote ? remote.checkins : null);
+  out.history = mergeHistory(local.history, remote ? remote.history : null);
+  return out;
+}
+
+function hasAnyData(d) {
+  return !!(d && ((d.tasks && d.tasks.length) || (d.history && d.history.length) ||
+    (d.checkins && Object.keys(d.checkins).length) || (d.dailyFixed && Object.keys(d.dailyFixed).length)));
+}
+
+async function syncWithCloud() {
+  if (syncing) return { skipped: true };
+  const token = localStorage.getItem('nengixing_gh_token');
+  if (!token) return { skipped: true };
+  syncing = true;
+  try {
+    let gistId = localStorage.getItem('nengixing_gist_id') || null;
+    const local = loadData();
+    const remote = gistId ? await readGistContent(token, gistId) : null;
+    const merged = mergeCloudData(local, remote);
+    const changed = JSON.stringify(merged) !== JSON.stringify(local);
+    if (changed) saveData(merged);
+    if (hasAnyData(merged) && (!remote || changed || !gistId)) {
+      gistId = await writeGist(token, gistId, merged);
+    }
+    return { ok: true, changed };
+  } finally {
+    syncing = false;
+  }
+}
+
+async function autoSyncQuiet() {
+  try {
+    await syncWithCloud();
+  } catch(e) {
+    // 静默失败，不影响使用；手动点同步可看到具体错误
+    console.warn('自动同步未完成：', e && e.message);
+  }
+}
+
+async function doSyncDirect() {
+  if (!localStorage.getItem('nengixing_gh_token')) { openSyncSetup(); return; }
+  flashSyncGlyph('⟳', 0);
+  try {
+    await syncWithCloud();
+    flashSyncGlyph('✓');
   } catch(err) {
-    btn.textContent = '✗';
-    setTimeout(() => { btn.textContent = '☁️'; }, 1500);
+    console.warn('同步失败：', err && err.message);
+    flashSyncGlyph('✗');
   }
 }
 
@@ -884,18 +1112,7 @@ async function doSync() {
   if (pin !== savedPin) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥错误</div>`; return; }
   resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在同步...</div>';
   try {
-    const localData = loadData();
-    const payload = JSON.stringify(localData, null, 2);
-    const gistId = localStorage.getItem('nengixing_gist_id');
-    if (gistId) {
-      const existing = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${savedToken}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => r.json());
-      existing.files[GIST_FILE] = { content: payload };
-      await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${savedToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(existing) });
-    } else {
-      const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${savedToken}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ description: '你能行-专注时钟数据备份', public: false, files: { [GIST_FILE]: { content: payload } } }) }).then(r => r.json());
-      if (!res.id) throw new Error(res.message || '创建失败');
-      localStorage.setItem('nengixing_gist_id', res.id);
-    }
+    await syncWithCloud();
     resultEl.innerHTML = '<div class="sync-result success">✅ 同步成功！</div>';
     setTimeout(closeSyncModal, 1200);
   } catch(err) {
@@ -907,14 +1124,14 @@ async function saveSyncSetup() {
   const token = document.getElementById('syncTokenInput').value.trim();
   const resultEl = document.getElementById('syncSetupResult');
   if (!pin || pin.length < 3) { resultEl.innerHTML = `<div class="sync-result error">❌ 密钥至少3位</div>`; return; }
-  if (!token || !token.startsWith('ghp_')) { resultEl.innerHTML = `<div class="sync-result error">❌ 请输入正确的 GitHub Token</div>`; return; }
+  if (!token || !(token.startsWith('ghp_') || token.startsWith('github_pat_'))) { resultEl.innerHTML = `<div class="sync-result error">❌ 请输入正确的 GitHub Token（ghp_ 或 github_pat_ 开头）</div>`; return; }
   resultEl.innerHTML = '<div class="sync-result" style="background:#e3f2fd;color:#1565c0">正在验证 Token...</div>';
   try {
-    await fetch('https://api.github.com/gists', { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }).then(r => { if (!r.ok) throw new Error('Token 无效'); return r.json(); });
+    await ghJson('/gists', token);
     localStorage.setItem('nengixing_pin', pin);
     localStorage.setItem('nengixing_gh_token', token);
-    resultEl.innerHTML = '<div class="sync-result success">✅ 密钥设置成功！以后点同步直接用</div>';
-    setTimeout(() => { closeSyncSetupModal(); renderSyncUI(); }, 1200);
+    resultEl.innerHTML = '<div class="sync-result success">✅ 设置成功！之后每次打开网站会自动同步备份</div>';
+    setTimeout(() => { closeSyncSetupModal(); doSyncDirect(); }, 1000);
   } catch(err) {
     resultEl.innerHTML = `<div class="sync-result error">❌ Token 无效</div>`;
   }
@@ -927,9 +1144,10 @@ function init() {
   updateTimerTaskLabel();
   renderTasks();
   renderDailyModules();
-  renderCalendar();
+  renderCalendarPage();
   updateStats();
-  renderSyncUI();
+  // 打开网站后自动静默同步一次（已配置密钥时）
+  setTimeout(autoSyncQuiet, 1200);
 }
 // 确保 DOM 完全就绪
 if (document.readyState === 'loading') {
