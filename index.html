@@ -124,6 +124,7 @@
     .calendar-day { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; color: #666; }
     .calendar-day.today { font-weight: 700; color: #667eea; background: rgba(102, 126, 234, 0.1); }
     .calendar-day.checked { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; }
+    .calendar-day.selected { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #667eea; }
     .calendar-day.empty { cursor: default; }
     .calendar-day.future { color: #ccc; cursor: not-allowed; }
     /* 统计 */
@@ -235,7 +236,7 @@
     </div>
   </div>
 
-  <!-- 打卡（仅保留浏览，不可手动操作） -->
+  <!-- 打卡 -->
   <div class="page" id="page-calendar">
     <div class="card">
       <div class="card-title">📅 打卡日历 <span style="font-size:0.7rem;color:#667eea;font-weight:600">完成任务自动打卡</span></div>
@@ -250,7 +251,7 @@
     </div>
     <div class="card">
       <div class="task-history">
-        <div class="task-history-title">📝 今日记录</div>
+        <div class="task-history-title"><span id="dayRecordTitle">📝 今日记录</span></div>
         <div class="task-history-list" id="taskHistoryList2"></div>
       </div>
     </div>
@@ -652,7 +653,7 @@ function finishAndSave(minutes, note) {
   let historyText = taskText || '专注' + minutes + '分钟';
   if (note) historyText = historyText + ' → ' + note;
   data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now() });
-  if (data.history.length > 100) data.history = data.history.slice(0, 100);
+  if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   saveData(data);
   autoCheckin();
   currentTaskIndex = -1;
@@ -821,8 +822,9 @@ window.deleteTask = function(i) {
   renderTasks();
 };
 
-// ===== 打卡日历（只读浏览，不可手动点击）=====
+// ===== 打卡日历（点击日期查看当日记录）=====
 let currentMonth = new Date();
+let selectedCalendarDate = null;
 
 function renderCalendarPage() {
   const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
@@ -844,8 +846,10 @@ function renderCalendarPage() {
     if (isToday) cls += ' today';
     if (isChecked) cls += ' checked';
     if (isFuture) cls += ' future';
-    // 不加 onclick，禁止手动点击
-    html += `<div class="${cls}">${d}</div>`;
+    if (dateStr === selectedCalendarDate) cls += ' selected';
+    // 非未来的日期可点击查看当天记录
+    const clickAttr = isFuture ? '' : ` onclick="selectCalendarDate('${dateStr}')"`;
+    html += `<div class="${cls}"${clickAttr}>${d}</div>`;
   }
   document.getElementById('calendarGrid2').innerHTML = html;
 }
@@ -884,17 +888,43 @@ function renderTaskHistory() {
   }
   el.innerHTML = todayItems.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
 }
-function renderTaskHistory2() {
+function renderDayRecords(dateStr) {
+  if (!dateStr) dateStr = getLocalDateStr();
+  selectedCalendarDate = dateStr;
   const data = loadData();
-  const today = getLocalDateStr();
   const el = document.getElementById('taskHistoryList2');
   if (!el) { console.error('taskHistoryList2 not found!'); return; }
-  const todayItems = data.history.filter(h => h.date === today);
-  if (todayItems.length === 0) {
-    el.innerHTML = '<div class="empty-state">今天还没有完成记录 💪</div>';
+  const dObj = new Date(dateStr + 'T00:00:00');
+  const title = document.getElementById('dayRecordTitle');
+  if (title && !isNaN(dObj.getTime())) {
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+    title.textContent = `📝 ${dObj.getMonth()+1}月${dObj.getDate()}日（${weekdays[dObj.getDay()]}）记录`;
+  }
+  const items = data.history.filter(h => h.date === dateStr);
+  const checked = !!data.checkins[dateStr];
+  if (items.length > 0) {
+    el.innerHTML = items.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
     return;
   }
-  el.innerHTML = todayItems.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
+  // 有些打卡来自勾选任务而非计时，这类日期没有文字历史，用当天完成的任务补上
+  const completedTasks = data.tasks.filter(t => t.completed && t.completedAt && getLocalDateStr(t.completedAt) === dateStr);
+  if (completedTasks.length > 0) {
+    el.innerHTML = completedTasks.map(t => `<div class="history-item"><span class="hi-dot"></span><span>${t.text}</span><span class="hi-time">✓</span></div>`).join('');
+    return;
+  }
+  el.innerHTML = checked
+    ? '<div class="empty-state">这天打过卡，但没有文字记录 🗓️</div>'
+    : '<div class="empty-state">这天还没有记录</div>';
+}
+
+function renderTaskHistory2() {
+  renderDayRecords(selectedCalendarDate || getLocalDateStr());
+}
+
+window.selectCalendarDate = function(dateStr) {
+  selectedCalendarDate = dateStr;
+  renderCalendarPage();
+  renderDayRecords(dateStr);
 }
 
 // ===== 同步 =====
@@ -1040,7 +1070,7 @@ function mergeHistory(localHistory, remoteHistory) {
     });
   });
   out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  return out.slice(0, 200);
+  return out.slice(0, 3000);
 }
 
 function mergeCloudData(local, remote) {
@@ -1145,6 +1175,7 @@ function init() {
   renderTasks();
   renderDailyModules();
   renderCalendarPage();
+  renderDayRecords(getLocalDateStr());
   updateStats();
   // 打开网站后自动静默同步一次（已配置密钥时）
   setTimeout(autoSyncQuiet, 1200);
