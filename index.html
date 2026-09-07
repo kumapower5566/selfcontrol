@@ -1113,6 +1113,11 @@ function cleanupCheckinForDate(data, dateStr) {
   if (!hasHistory && !hasTask && !hasDailyToday) delete data.checkins[dateStr];
 }
 
+function cleanupOrphanCheckins(data) {
+  if (!isPlainObject(data.checkins)) return;
+  Object.keys(data.checkins).forEach(dateStr => cleanupCheckinForDate(data, dateStr));
+}
+
 window.editHistoryItem = function(idx) {
   const data = loadData();
   const h = data.history[idx];
@@ -1454,6 +1459,7 @@ function init() {
   const initData = loadData();
   const beforeRecalc = JSON.stringify(initData);
   recalcDailyFromTodayHistory(initData);
+  cleanupOrphanCheckins(initData);
   if (JSON.stringify(initData) !== beforeRecalc) {
     markDataUpdated(initData);
     saveData(initData);
