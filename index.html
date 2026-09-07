@@ -13,6 +13,8 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+    html, body, button, input, select, textarea, .nav-item, .daily-module, .calendar-day, .task-item { touch-action: manipulation; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #faf9fb; color: #333; padding-bottom: 72px; }
     .header { text-align: center; padding: 52px 20px 10px; background: #faf9fb; position: relative; transition: padding 0.2s; }
     .header.compact { padding: 12px 20px 8px; }
@@ -130,6 +132,12 @@
     .calendar-day.future { color: #ccc; cursor: not-allowed; }
     .calendar-day-hint { text-align: center; font-size: 0.78rem; color: #999; margin-top: 12px; min-height: 18px; }
     .calendar-day-hint.on { color: #2e7d32; font-weight: 600; }
+    .manual-checkin-btn { width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
+    .manual-checkin-btn:active { transform: scale(0.97); }
+    .manual-row { display: flex; gap: 10px; }
+    .manual-row .sync-input { margin-bottom: 0; }
+    .manual-row .manual-date-input { flex: 1.4; min-width: 0; }
+    .manual-row .manual-min-input { flex: 1; min-width: 0; }
     @media (min-width: 620px) {
       .header, .page { max-width: 520px; margin-left: auto; margin-right: auto; }
       .bottom-nav { max-width: 520px; margin: 0 auto; border-left: 1px solid rgba(0,0,0,0.06); border-right: 1px solid rgba(0,0,0,0.06); }
@@ -160,13 +168,13 @@
     @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     .modal-title { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; text-align: center; }
     .modal-sub { font-size: 0.85rem; color: #999; text-align: center; margin-bottom: 20px; }
-    .modal-textarea { width: 100%; min-height: 120px; border-radius: 16px; border: 2px solid #f0f0f0; padding: 14px; font-size: 0.95rem; font-family: inherit; resize: vertical; outline: none; transition: border-color 0.2s; }
+    .modal-textarea { width: 100%; min-height: 120px; border-radius: 16px; border: 2px solid #f0f0f0; padding: 14px; font-size: 16px; font-family: inherit; resize: vertical; outline: none; transition: border-color 0.2s; }
     .modal-textarea:focus { border-color: #fcb69f; }
     .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
     .modal-btns button { flex: 1; padding: 14px 0; border-radius: 50px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: inherit; }
     .btn-skip { background: #f5f4f7; color: #999; }
     .btn-confirm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-    .sync-input { width: 100%; padding: 14px 16px; border-radius: 16px; border: 2px solid #f0f0f0; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; margin-bottom: 12px; }
+    .sync-input { width: 100%; padding: 14px 16px; border-radius: 16px; border: 2px solid #f0f0f0; font-size: 16px; font-family: inherit; outline: none; transition: border-color 0.2s; margin-bottom: 12px; }
     .sync-input:focus { border-color: #667eea; }
     .sync-result { font-size: 0.85rem; text-align: center; margin-top: 10px; padding: 10px; border-radius: 12px; }
     .sync-result.success { background: #e8f5e9; color: #2e7d32; }
@@ -218,17 +226,17 @@
       <div class="daily-modules" id="dailyModules">
         <div class="daily-module" onclick="selectDailyModule('word')">
           <div class="daily-module-icon">📖</div>
-          <div class="daily-module-text">英语单词</div>
+          <div class="daily-module-text">英语</div>
           <div class="daily-module-time">30分钟</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('exercise')">
           <div class="daily-module-icon">✏️</div>
-          <div class="daily-module-text">英语习题</div>
+          <div class="daily-module-text">练习</div>
           <div class="daily-module-time">30分钟</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('skill')">
-          <div class="daily-module-icon">🎨</div>
-          <div class="daily-module-text">软件/艺术积累</div>
+          <div class="daily-module-icon">🏃</div>
+          <div class="daily-module-text">运动</div>
           <div class="daily-module-time">30分钟</div>
         </div>
       </div>
@@ -256,6 +264,7 @@
       </div>
       <div class="calendar-grid" id="calendarGrid2"></div>
       <div class="calendar-day-hint" id="calendarDayHint"></div>
+      <button class="manual-checkin-btn" id="manualCheckinBtn" onclick="openManualCheckin()">＋ 忘记计时？手动补记</button>
     </div>
     <div class="card">
       <div class="task-history">
@@ -323,12 +332,42 @@
     </div>
   </div>
 
+  <!-- 手动补记弹窗 -->
+  <div class="modal-overlay" id="manualModal">
+    <div class="modal">
+      <div class="modal-title">📝 手动补记</div>
+      <div class="modal-sub">忘记计时也能补上今天的打卡</div>
+      <input type="text" class="sync-input" id="manualName" placeholder="项目名称，如：英语、跑步" maxlength="40" style="ime-mode:auto">
+      <div class="manual-row">
+        <input type="date" class="sync-input manual-date-input" id="manualDate">
+        <input type="number" class="sync-input manual-min-input" id="manualMinutes" min="1" max="600" placeholder="时长(分)" inputmode="numeric">
+      </div>
+      <div id="manualResult"></div>
+      <div class="modal-btns">
+        <button class="btn-skip" onclick="closeManualCheckin()">取消</button>
+        <button class="btn-confirm" onclick="saveManualCheckin()">保存打卡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 未开启备份提醒弹窗 -->
+  <div class="modal-overlay" id="syncRemindModal">
+    <div class="modal">
+      <div class="modal-title">☁️ 建议开启自动备份</div>
+      <div class="modal-sub">还没连接云端备份。没备份的话，换设备或清理浏览器后，打卡记录可能会丢失。</div>
+      <div class="modal-btns">
+        <button class="btn-skip" onclick="dismissSyncRemind()">暂不</button>
+        <button class="btn-confirm" onclick="dismissSyncRemind(); openSyncSetup();">去设置</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 // ===== 常量 =====
 const DAILY_FIXED = [
-  { id: 'word', text: '英语单词', minutes: 30, icon: '📖' },
-  { id: 'exercise', text: '英语习题', minutes: 30, icon: '✏️' },
-  { id: 'skill', text: '软件/艺术积累', minutes: 30, icon: '🎨' }
+  { id: 'word', text: '英语', minutes: 30, icon: '📖' },
+  { id: 'exercise', text: '练习', minutes: 30, icon: '✏️' },
+  { id: 'skill', text: '运动', minutes: 30, icon: '🏃' }
 ];
 const DATA_KEY = 'focus_clock_data_v5';
 
@@ -556,6 +595,7 @@ function startTimer() {
   }
   ensureNotificationPermission();
   primeAudioForGesture();
+  maybeShowSyncRemind();
   isRunning = true;
   setTimerControlsRunning();
   timerStatus.textContent = '专注中...';
@@ -648,6 +688,7 @@ function finishAndSave(minutes, note) {
   data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now() });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   saveData(data);
+  scheduleAutoSync();
   autoCheckin();
   currentTaskIndex = -1;
   setTimerControlsIdle('专注记录已保存 ✅');
@@ -797,6 +838,8 @@ window.toggleTask = function(i) {
     updateTimerTaskLabel();
   }
   saveData(data);
+  scheduleAutoSync();
+  if (task.completed) maybeShowSyncRemind();
   renderTasks();
   autoCheckin();
   updateStats();
@@ -812,6 +855,7 @@ window.deleteTask = function(i) {
   const data = loadData();
   data.tasks.splice(i, 1);
   saveData(data);
+  scheduleAutoSync();
   renderTasks();
 };
 
@@ -929,6 +973,67 @@ window.selectCalendarDate = function(dateStr) {
   renderCalendarPage();
   renderDayRecords(dateStr);
 }
+
+// ===== 自动备份与未备份提醒 =====
+let syncRemindShown = false;
+let autoSyncDebounce = null;
+
+function scheduleAutoSync() {
+  if (!localStorage.getItem('nengixing_gh_token')) return;
+  if (autoSyncDebounce) clearTimeout(autoSyncDebounce);
+  autoSyncDebounce = setTimeout(() => {
+    autoSyncDebounce = null;
+    autoSyncQuiet();
+  }, 4000);
+}
+
+function maybeShowSyncRemind() {
+  if (syncRemindShown) return;
+  if (localStorage.getItem('nengixing_gh_token')) return;
+  if (localStorage.getItem('nengixing_remind_date') === getLocalDateStr()) return;
+  syncRemindShown = true;
+  document.getElementById('syncRemindModal').classList.add('show');
+}
+function dismissSyncRemind() {
+  localStorage.setItem('nengixing_remind_date', getLocalDateStr());
+  document.getElementById('syncRemindModal').classList.remove('show');
+}
+
+// ===== 手动补记 =====
+function openManualCheckin() {
+  document.getElementById('manualName').value = '';
+  document.getElementById('manualDate').value = getLocalDateStr();
+  document.getElementById('manualMinutes').value = '30';
+  document.getElementById('manualResult').innerHTML = '';
+  document.getElementById('manualModal').classList.add('show');
+}
+function closeManualCheckin() {
+  document.getElementById('manualModal').classList.remove('show');
+}
+window.saveManualCheckin = function() {
+  const name = document.getElementById('manualName').value.trim();
+  const minutesRaw = parseInt(document.getElementById('manualMinutes').value, 10);
+  const dateStr = document.getElementById('manualDate').value || getLocalDateStr();
+  const resultEl = document.getElementById('manualResult');
+  if (!name) { resultEl.innerHTML = '<div class="sync-result error">请填写项目名称</div>'; return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
+  if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
+  const minutes = Math.min(600, minutesRaw);
+  const data = loadData();
+  const historyText = name + '（手动）';
+  const duplicated = data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
+  if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
+  data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now() });
+  if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
+  data.checkins[dateStr] = true;
+  saveData(data);
+  scheduleAutoSync();
+  updateStats();
+  renderCalendarPage();
+  renderDayRecords(dateStr);
+  document.getElementById('manualModal').classList.remove('show');
+  resultEl.innerHTML = '';
+};
 
 // ===== 同步 =====
 const GIST_FILE = 'nengixing-data.json';
