@@ -801,7 +801,7 @@ function renderDailyModules() {
       const timeEl = mod.querySelector('.daily-module-time');
       if (timeEl) {
         const today = getLocalDateStr();
-        const count = (data.history || []).filter(h => h.date === today && historyMatchesModule(h.text, f.text)).length;
+        const count = (data.history || []).filter(h => h.date === today && historyBelongsToModule(h, f)).length;
         timeEl.textContent = '打卡 ' + count + ' 次';
       }
       const isDone = !!data.dailyFixed[id];
@@ -1142,12 +1142,18 @@ function dismissSyncRemind() {
 
 // ===== 手动补记 =====
 function openManualCheckin() {
-  document.getElementById('manualName').value = '';
+  const nameInput = document.getElementById('manualName');
+  nameInput.value = '';
+  nameInput.style.display = '';
+  nameInput.placeholder = '项目名称（必填）';
   document.getElementById('manualDate').value = getLocalDateStr();
   document.getElementById('manualMinutes').value = '30';
   document.getElementById('manualResult').innerHTML = '';
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
   cats.forEach(c => c.classList.remove('active'));
+  // 默认“其他”：需要填项目名称；点上面三类则下方变成选填备注
+  const otherBtn = document.querySelector('#manualCatRow .manual-cat[data-val=""]');
+  if (otherBtn) otherBtn.classList.add('active');
   document.getElementById('manualModal').classList.add('show');
 }
 window.pickManualCat = function(text, btn) {
@@ -1155,30 +1161,45 @@ window.pickManualCat = function(text, btn) {
   cats.forEach(c => c.classList.remove('active'));
   if (btn) btn.classList.add('active');
   const nameEl = document.getElementById('manualName');
-  nameEl.value = text || '';
-  nameEl.focus();
+  nameEl.value = '';
+  nameEl.style.display = '';
+  if (text) {
+    // 已选每日必做类别：下方框只是备注，不影响分类
+    nameEl.placeholder = '备注（选填），如：跑步 5 公里';
+  } else {
+    nameEl.placeholder = '项目名称，如：跑步、阅读';
+    nameEl.focus();
+  }
 };
-document.getElementById('manualName').addEventListener('input', () => {
-  const v = document.getElementById('manualName').value.trim();
-  document.querySelectorAll('#manualCatRow .manual-cat').forEach(b => b.classList.toggle('active', b.dataset.val === v));
-});
 function closeManualCheckin() {
   document.getElementById('manualModal').classList.remove('show');
 }
 window.saveManualCheckin = function() {
+  const activeCatEl = document.querySelector('#manualCatRow .manual-cat.active');
+  const activeVal = activeCatEl && activeCatEl.dataset.val !== undefined ? activeCatEl.dataset.val : '';
+  const module = DAILY_FIXED.find(f => f.text === activeVal);
   const name = document.getElementById('manualName').value.trim();
   const minutesRaw = parseInt(document.getElementById('manualMinutes').value, 10);
   const dateStr = document.getElementById('manualDate').value || getLocalDateStr();
   const resultEl = document.getElementById('manualResult');
-  if (!name) { resultEl.innerHTML = '<div class="sync-result error">请填写项目名称</div>'; return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
   if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
   const minutes = Math.min(600, minutesRaw);
   const data = loadData();
-  const historyText = name + '（手动）';
+  let historyText, cat;
+  if (module) {
+    // 选了每日必做类别：框内只是备注，类别固定为该模块
+    cat = module.id;
+    historyText = module.text + (name ? '（' + name + '）' : '') + '（手动）';
+  } else {
+    // 其他：框内文字就是项目名
+    cat = 'other';
+    if (!name) { resultEl.innerHTML = '<div class="sync-result error">选了“其他”需要填写项目名称</div>'; return; }
+    historyText = name + '（手动）';
+  }
   const duplicated = data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
-  data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now() });
+  data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   data.checkins[dateStr] = true;
   if (dateStr === getLocalDateStr()) recalcDailyFromTodayHistory(data);
@@ -1210,11 +1231,19 @@ function historyMatchesModule(title, moduleText) {
     t.startsWith(moduleText + '→');
 }
 
+function historyBelongsToModule(h, f) {
+  if (!h || !f) return false;
+  if (h.cat === 'other') return false;
+  if (h.cat) return h.cat === f.id;
+  // 老记录没有 cat 字段时，按文字前缀判断
+  return historyMatchesModule(h.text, f.text);
+}
+
 // 根据“当天历史记录”重新计算每日必做是否已完成，保证删除记录会同步移除绿勾
 function recalcDailyFromTodayHistory(data) {
   const today = getLocalDateStr();
   DAILY_FIXED.forEach(f => {
-    const exists = (data.history || []).some(h => h.date === today && historyMatchesModule(h.text, f.text));
+    const exists = (data.history || []).some(h => h.date === today && historyBelongsToModule(h, f));
     if (exists) data.dailyFixed[f.id] = true;
     else delete data.dailyFixed[f.id];
   });
