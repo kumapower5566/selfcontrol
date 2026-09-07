@@ -44,13 +44,13 @@
     .task-card-compact .task-text { font-size: 0.85rem; }
     .task-card-compact .task-start-btn { width: 22px; height: 22px; font-size: 0.65rem; }
     .task-card-compact .task-delete { font-size: 1.1rem; padding: 2px 4px; }
-    .daily-fixed-compact { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); border-radius: 18px; padding: 12px; margin-bottom: 10px; border: 2px solid rgba(102,126,234,0.15); }
+    .daily-fixed-compact { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); border-radius: 18px; padding: 12px; margin-bottom: 10px; border: 2px solid rgba(102,126,234,0.15); display: block !important; visibility: visible !important; }
     .daily-fixed-compact .daily-fixed-title { font-size: 0.75rem; margin-bottom: 8px; }
-    .daily-fixed-compact .daily-modules { gap: 6px; }
-    .daily-fixed-compact .daily-module { padding: 8px 4px; border-radius: 12px; }
-    .daily-fixed-compact .daily-module-icon { font-size: 1.3rem; margin-bottom: 2px; }
-    .daily-fixed-compact .daily-module-text { font-size: 0.72rem; margin-bottom: 3px; }
-    .daily-fixed-compact .daily-module-time { font-size: 0.65rem; }
+    .daily-fixed-compact .daily-modules { gap: 6px; display: grid !important; grid-template-columns: repeat(3, 1fr) !important; }
+    .daily-fixed-compact .daily-module { padding: 8px 4px; border-radius: 12px; display: block !important; visibility: visible !important; }
+    .daily-fixed-compact .daily-module-icon { font-size: 1.3rem; margin-bottom: 2px; display: block; }
+    .daily-fixed-compact .daily-module-text { font-size: 0.72rem; margin-bottom: 3px; display: block; }
+    .daily-fixed-compact .daily-module-time { font-size: 0.65rem; display: block; }
     /* 通用 */
     .page { display: none; padding: 0 16px 20px; animation: pageIn 0.3s ease; }
     .page.active { display: block; }
@@ -206,7 +206,20 @@
         <span>🎯 每日必做</span>
         <span class="progress" id="dailyFixedProgress">0/3</span>
       </div>
-      <div class="daily-modules" id="dailyModules"></div>
+      <div class="daily-modules" id="dailyModules">
+        <div class="daily-module" onclick="selectDailyModule('word')">
+          <div class="daily-module-icon">📖</div>
+          <div class="daily-module-text">英语单词</div>
+        </div>
+        <div class="daily-module" onclick="selectDailyModule('exercise')">
+          <div class="daily-module-icon">✏️</div>
+          <div class="daily-module-text">英语习题</div>
+        </div>
+        <div class="daily-module" onclick="selectDailyModule('skill')">
+          <div class="daily-module-icon">🎨</div>
+          <div class="daily-module-text">软件/艺术积累</div>
+        </div>
+      </div>
     </div>
 
     <div class="task-card-compact">
@@ -230,6 +243,12 @@
         </div>
       </div>
       <div class="calendar-grid" id="calendarGrid2"></div>
+    </div>
+    <div class="card">
+      <div class="task-history">
+        <div class="task-history-title">📝 今日记录</div>
+        <div class="task-history-list" id="taskHistoryList2"></div>
+      </div>
     </div>
   </div>
 
@@ -315,6 +334,12 @@ const DAILY_FIXED = [
 ];
 const DATA_KEY = 'focus_clock_data_v5';
 
+// 获取本地日期字符串（支持时间戳）
+function getLocalDateStr(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 // ===== 顶部日期 =====
 function updateHeaderDate() {
   const now = new Date();
@@ -349,7 +374,7 @@ navItems.forEach(item => {
       syncBtn.classList.add('hide');
       header.classList.add('compact');
     }
-    if (t === 'calendar') { renderCalendarPage(); renderCalendar(); }
+    if (t === 'calendar') { renderCalendarPage(); renderCalendar(); renderTaskHistory2(); }
     if (t === 'stats') { updateStats(); }
     if (t === 'timer') { renderTasks(); renderDailyModules(); updateTimerTaskLabel(); }
   });
@@ -359,13 +384,23 @@ navItems.forEach(item => {
 function loadData() {
   const d = localStorage.getItem(DATA_KEY);
   const def = { tasks: [], dailyFixed: {}, checkins: {}, history: [], dailyFixedDate: '' };
-  return d ? JSON.parse(d) : def;
+  if (!d) return def;
+  const data = JSON.parse(d);
+  // 数据迁移：将历史记录的日期从 UTC 转换为北京时间
+  if (data.history && data.history.length > 0) {
+    data.history.forEach(h => {
+      if (h.ts) {
+        h.date = getLocalDateStr(h.ts);
+      }
+    });
+  }
+  return data;
 }
 function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
 
 // 零点重置每日固定项目
 function checkDailyReset() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateStr();
   const data = loadData();
   if (data.dailyFixedDate !== today) {
     data.dailyFixed = {};
@@ -376,7 +411,7 @@ function checkDailyReset() {
 
 // 自动打卡：完成任意任务或每日必做则打卡
 function autoCheckin() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateStr();
   const data = loadData();
   const hasTask = data.tasks.some(t => t.completed);
   const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
@@ -393,6 +428,8 @@ let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
 let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
 let currentTaskIndex = -1;
 let currentDailyId = null; // 当前选择的每日必做ID
+let overtimeSeconds = 0; // 超过的时间（秒）
+let overtimeInterval = null; // 超时计时器
 const timerDisplay = document.getElementById('timerDisplay');
 const timerStatus = document.getElementById('timerStatus');
 const timerTaskLabel = document.getElementById('timerTaskLabel');
@@ -447,19 +484,30 @@ function startTimer() {
     remainingSeconds = Math.max(0, timerInitialSeconds - Math.floor((Date.now() - timerStartTime) / 1000));
     updateTimerDisplay();
     if (remainingSeconds === 0) {
+      // 倒计时结束，开始正向计时
       clearInterval(timerInterval);
-      isRunning = false;
-      onTimerComplete(currentPreset, true);
+      overtimeSeconds = 0;
+      timerStatus.textContent = '超时继续...';
+      timerDisplay.style.color = '#e74c3c'; // 红色警示
+      overtimeInterval = setInterval(() => {
+        overtimeSeconds++;
+        const mins = Math.floor(overtimeSeconds / 60);
+        const secs = overtimeSeconds % 60;
+        timerDisplay.textContent = `${(currentPreset + mins).toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+      }, 1000);
     }
   }, 1000);
 }
 
 function resetTimer() {
   clearInterval(timerInterval);
+  clearInterval(overtimeInterval);
   isRunning = false;
+  overtimeSeconds = 0;
   remainingSeconds = currentPreset * 60;
   timerStartTime = null; timerInitialSeconds = null;
   updateTimerDisplay();
+  timerDisplay.style.color = ''; // 恢复默认颜色
   startBtn.textContent = '开始';
   timerStatus.textContent = '选择任务，开始专注';
   resetBtn.style.display = 'none';
@@ -469,19 +517,30 @@ function resetTimer() {
 }
 
 function endTimerEarly() {
-  if (!isRunning && remainingSeconds === currentPreset * 60) return;
+  if (!isRunning && remainingSeconds === currentPreset * 60 && overtimeSeconds === 0) return;
   clearInterval(timerInterval);
+  clearInterval(overtimeInterval);
   isRunning = false;
-  const saved = timerInitialSeconds !== null ? timerInitialSeconds : currentPreset * 60;
-  const minutes = Math.max(1, Math.floor((saved - remainingSeconds) / 60));
-  onTimerComplete(minutes, false);
+  // 计算总专注时间（包括超时）
+  const timerInitial = timerInitialSeconds !== null ? timerInitialSeconds : currentPreset * 60;
+  const elapsedSeconds = timerInitial - remainingSeconds + overtimeSeconds;
+  const minutes = Math.max(1, Math.floor(elapsedSeconds / 60));
+  overtimeSeconds = 0;
+  timerDisplay.style.color = ''; // 恢复默认颜色
+  // 显示弹窗让用户记录
+  document.getElementById('finishMinutes').textContent = minutes;
+  document.getElementById('finishNote').value = '';
+  document.getElementById('finishModal').classList.add('show');
 }
 
 function onTimerComplete(minutes, showModal) {
+  clearInterval(overtimeInterval);
+  overtimeSeconds = 0;
   startBtn.textContent = '开始';
   timerStatus.textContent = '太棒了！完成一次专注 🎉';
   remainingSeconds = currentPreset * 60;
   timerStartTime = null; timerInitialSeconds = null;
+  timerDisplay.style.color = ''; // 恢复默认颜色
   resetBtn.style.display = 'none';
   endBtn.style.display = 'none';
   updateTimerDisplay();
@@ -497,12 +556,15 @@ function closeFinishModal(skip) {
   const note = skip ? '' : document.getElementById('finishNote').value.trim();
   document.getElementById('finishModal').classList.remove('show');
   document.getElementById('finishNote').value = '';
+  if (!skip && note) {
+    // 记录已保存
+  }
   finishAndSave(parseInt(document.getElementById('finishMinutes').textContent) || currentPreset, note);
 }
 
 function finishAndSave(minutes, note) {
   const data = loadData();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateStr();
   let taskText = '';
 
   // 每日必做完成
@@ -524,7 +586,9 @@ function finishAndSave(minutes, note) {
   }
 
   // 加入历史记录
-  data.history.unshift({ text: taskText || '专注' + minutes + '分钟', time: minutes, date: today, ts: Date.now() });
+  let historyText = taskText || '专注' + minutes + '分钟';
+  if (note) historyText = historyText + ' → ' + note;
+  data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now() });
   if (data.history.length > 50) data.history = data.history.slice(0, 50);
   saveData(data);
   autoCheckin();
@@ -534,6 +598,8 @@ function finishAndSave(minutes, note) {
   renderTasks();
   renderDailyModules();
   renderCalendar();
+  renderTaskHistory();
+  renderTaskHistory2();
   timerStatus.textContent = '专注记录已保存 ✅';
   setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2000);
 }
@@ -554,26 +620,29 @@ endBtn.addEventListener('click', endTimerEarly);
 
 // ===== 每日固定项目 - 横向三模块 =====
 function renderDailyModules() {
-  checkDailyReset();
-  const data = loadData();
-  const done = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
-  document.getElementById('dailyFixedProgress').textContent = done + '/3';
-  const container = document.getElementById('dailyModules');
-  container.innerHTML = DAILY_FIXED.map(f => {
-    const isDone = !!data.dailyFixed[f.id];
-    const isSelected = currentDailyId === f.id;
-    const isTiming = isSelected && isRunning;
-    let cls = 'daily-module';
-    if (isDone) cls += ' completed';
-    else if (isTiming) cls += ' timing';
-    else if (isSelected) cls += ' selected';
-    return `<div class="${cls}" onclick="selectDailyModule('${f.id}')">
-      ${isDone ? '<div class="daily-module-check">✓</div>' : ''}
-      <div class="daily-module-icon">${f.icon}</div>
-      <div class="daily-module-text">${f.text}</div>
-      <div class="daily-module-time">${f.time}</div>
-    </div>`;
-  }).join('');
+  try {
+    checkDailyReset();
+    const data = loadData();
+    const done = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
+    document.getElementById('dailyFixedProgress').textContent = done + '/3';
+    const container = document.getElementById('dailyModules');
+    if (!container) { console.error('dailyModules not found!'); return; }
+    // 更新状态，不重新生成 HTML
+    const modules = container.querySelectorAll('.daily-module');
+    modules.forEach(mod => {
+      const id = mod.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+      if (!id) return;
+      const f = DAILY_FIXED.find(x => x.id === id);
+      if (!f) return;
+      const isDone = !!data.dailyFixed[id];
+      const isSelected = currentDailyId === id;
+      const isTiming = isSelected && isRunning;
+      mod.className = 'daily-module' + (isDone ? ' completed' : isTiming ? ' timing' : isSelected ? ' selected' : '');
+      if (isDone && !mod.querySelector('.daily-module-check')) {
+        mod.insertAdjacentHTML('afterbegin', '<div class="daily-module-check">✓</div>');
+      }
+    });
+  } catch(e) { console.error('renderDailyModules error:', e); }
 }
 
 window.selectDailyModule = function(id) {
@@ -668,7 +737,7 @@ let currentMonth = new Date();
 
 function buildCalendarHTML(year, month, gridId) {
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = getLocalDateStr();
   const data = loadData();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -709,8 +778,8 @@ document.getElementById('nextMonth2').addEventListener('click', () => { currentM
 // ===== 统计 =====
 function updateStats() {
   const data = loadData();
-  const today = new Date().toISOString().split('T')[0];
-  const todayTasks = data.tasks.filter(t => t.completedAt && new Date(t.completedAt).toISOString().split('T')[0] === today).length;
+  const today = getLocalDateStr();
+  const todayTasks = data.tasks.filter(t => t.completedAt && getLocalDateStr(t.completedAt) === today).length;
   const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
   const total = todayTasks + dailyDone;
   document.getElementById('totalFocus').textContent = total;
@@ -724,8 +793,20 @@ function updateStats() {
 
 function renderTaskHistory() {
   const data = loadData();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateStr();
   const el = document.getElementById('taskHistoryList');
+  const todayItems = data.history.filter(h => h.date === today);
+  if (todayItems.length === 0) {
+    el.innerHTML = '<div class="empty-state">今天还没有完成记录 💪</div>';
+    return;
+  }
+  el.innerHTML = todayItems.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
+}
+function renderTaskHistory2() {
+  const data = loadData();
+  const today = getLocalDateStr();
+  const el = document.getElementById('taskHistoryList2');
+  if (!el) { console.error('taskHistoryList2 not found!'); return; }
   const todayItems = data.history.filter(h => h.date === today);
   if (todayItems.length === 0) {
     el.innerHTML = '<div class="empty-state">今天还没有完成记录 💪</div>';
@@ -840,14 +921,22 @@ async function saveSyncSetup() {
 }
 
 // ===== 初始化 =====
-checkDailyReset();
-updateTimerDisplay();
-updateTimerTaskLabel();
-renderTasks();
-renderDailyModules();
-renderCalendar();
-updateStats();
-renderSyncUI();
+function init() {
+  checkDailyReset();
+  updateTimerDisplay();
+  updateTimerTaskLabel();
+  renderTasks();
+  renderDailyModules();
+  renderCalendar();
+  updateStats();
+  renderSyncUI();
+}
+// 确保 DOM 完全就绪
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  setTimeout(init, 100);
+}
 </script>
 </body>
 </html>
