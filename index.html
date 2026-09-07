@@ -232,17 +232,17 @@
         <div class="daily-module" onclick="selectDailyModule('word')">
           <div class="daily-module-icon">📖</div>
           <div class="daily-module-text">英语</div>
-          <div class="daily-module-time">30分钟</div>
+          <div class="daily-module-time">打卡 0 次</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('exercise')">
           <div class="daily-module-icon">✏️</div>
           <div class="daily-module-text">练习</div>
-          <div class="daily-module-time">30分钟</div>
+          <div class="daily-module-time">打卡 0 次</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('skill')">
           <div class="daily-module-icon">🏃</div>
           <div class="daily-module-text">运动</div>
-          <div class="daily-module-time">30分钟</div>
+          <div class="daily-module-time">打卡 0 次</div>
         </div>
       </div>
     </div>
@@ -761,7 +761,11 @@ function renderDailyModules() {
       const f = DAILY_FIXED.find(x => x.id === id);
       if (!f) return;
       const timeEl = mod.querySelector('.daily-module-time');
-      if (timeEl) timeEl.textContent = f.minutes + '分钟';
+      if (timeEl) {
+        const today = getLocalDateStr();
+        const count = (data.history || []).filter(h => h.date === today && historyMatchesModule(h.text, f.text)).length;
+        timeEl.textContent = '打卡 ' + count + ' 次';
+      }
       const isDone = !!data.dailyFixed[id];
       const isSelected = currentDailyId === id;
       const isTiming = isSelected && isRunning;
@@ -953,7 +957,9 @@ function renderTaskHistory() {
     el.innerHTML = '<div class="empty-state">今天还没有完成记录 💪</div>';
     return;
   }
-  el.innerHTML = todayItems.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
+  el.innerHTML = data.history.map((h, idx) => h.date !== today ? '' :
+    `<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${h.time}分钟</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
+  ).join('');
 }
 function renderDayRecords(dateStr) {
   if (!dateStr) dateStr = getLocalDateStr();
@@ -1060,10 +1066,12 @@ window.saveManualCheckin = function() {
   data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now() });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   data.checkins[dateStr] = true;
+  if (dateStr === getLocalDateStr()) recalcDailyFromTodayHistory(data);
   markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   updateStats();
+  renderDailyModules();
   renderCalendarPage();
   renderDayRecords(dateStr);
   document.getElementById('manualModal').classList.remove('show');
@@ -1076,6 +1084,25 @@ let editingHistoryIndex = -1;
 function displayHistoryText(h) {
   // 老记录会在名称后带 (N分钟)，展示时去掉，避免和右侧时长重复
   return String(h.text || '').replace(/\s*\(\s*\d+\s*分钟\s*\)\s*$/, '');
+}
+
+function historyMatchesModule(title, moduleText) {
+  const t = String(title || '').trim();
+  return t === moduleText ||
+    t.startsWith(moduleText + ' ') ||
+    t.startsWith(moduleText + '（') ||
+    t.startsWith(moduleText + '(') ||
+    t.startsWith(moduleText + '→');
+}
+
+// 根据“当天历史记录”重新计算每日必做是否已完成，保证删除记录会同步移除绿勾
+function recalcDailyFromTodayHistory(data) {
+  const today = getLocalDateStr();
+  DAILY_FIXED.forEach(f => {
+    const exists = (data.history || []).some(h => h.date === today && historyMatchesModule(h.text, f.text));
+    if (exists) data.dailyFixed[f.id] = true;
+    else delete data.dailyFixed[f.id];
+  });
 }
 
 function cleanupCheckinForDate(data, dateStr) {
@@ -1117,12 +1144,14 @@ window.saveEditRecord = function() {
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">已存在相同记录</div>'; return; }
   const oldDate = data.history[idx].date;
   data.history[idx] = { ...data.history[idx], text: name, time: minutes, date: dateStr };
+  recalcDailyFromTodayHistory(data);
   cleanupCheckinForDate(data, oldDate);
   data.checkins[dateStr] = true;
   markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   updateStats();
+  renderDailyModules();
   renderCalendarPage();
   renderDayRecords(dateStr);
   document.getElementById('editRecordModal').classList.remove('show');
@@ -1134,11 +1163,13 @@ window.deleteHistoryItem = function(idx) {
   if (!h) return;
   if (!window.confirm('确定删除这条打卡记录吗？')) return;
   data.history.splice(idx, 1);
+  recalcDailyFromTodayHistory(data);
   cleanupCheckinForDate(data, h.date);
   markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
   updateStats();
+  renderDailyModules();
   renderCalendarPage();
   renderDayRecords(selectedCalendarDate || h.date);
 };
