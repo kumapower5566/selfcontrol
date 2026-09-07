@@ -159,6 +159,11 @@
     .history-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #faf9fb; border-radius: 12px; font-size: 0.88rem; color: #555; }
     .history-item .hi-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; flex-shrink: 0; }
     .history-item .hi-time { font-size: 0.75rem; color: #999; margin-left: auto; flex-shrink: 0; }
+    .history-item .hi-text { flex: 1; min-width: 0; word-break: break-word; }
+    .history-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .history-actions button { border: none; background: #f0eef4; width: 30px; height: 30px; border-radius: 9px; font-size: 0.95rem; cursor: pointer; color: #888; font-family: inherit; line-height: 1; padding: 0; transition: all 0.15s; }
+    .history-actions button:active { transform: scale(0.9); }
+    .history-actions .act-del { color: #e57373; }
     .sync-btn { width: 100%; padding: 14px; border-radius: 16px; border: none; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #6a5a4a; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.25s; font-family: inherit; margin-top: 12px; }
     .sync-btn:active { transform: scale(0.97); }
     .sync-hint { font-size: 0.78rem; color: #bbb; margin-bottom: 16px; line-height: 1.5; }
@@ -350,6 +355,24 @@
     </div>
   </div>
 
+  <!-- 修改打卡记录弹窗 -->
+  <div class="modal-overlay" id="editRecordModal">
+    <div class="modal">
+      <div class="modal-title">✏️ 修改打卡记录</div>
+      <div class="modal-sub">可以改项目名称、日期和时长</div>
+      <input type="text" class="sync-input" id="recordEditName" placeholder="项目名称" maxlength="40">
+      <div class="manual-row">
+        <input type="date" class="sync-input manual-date-input" id="recordEditDate">
+        <input type="number" class="sync-input manual-min-input" id="recordEditMinutes" min="1" max="600" placeholder="时长(分)" inputmode="numeric">
+      </div>
+      <div id="recordEditResult"></div>
+      <div class="modal-btns">
+        <button class="btn-skip" onclick="closeEditRecord()">取消</button>
+        <button class="btn-confirm" onclick="saveEditRecord()">保存修改</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 未开启备份提醒弹窗 -->
   <div class="modal-overlay" id="syncRemindModal">
     <div class="modal">
@@ -423,10 +446,10 @@ function loadData() {
   const def = { tasks: [], dailyFixed: {}, checkins: {}, history: [], dailyFixedDate: '' };
   if (!d) return def;
   const data = JSON.parse(d);
-  // 数据迁移：将历史记录的日期从 UTC 转换为北京时间
+  // 数据迁移：旧数据缺少 date 时用时间戳补上（已有日期则保留，否则回填日期会被覆盖）
   if (data.history && data.history.length > 0) {
     data.history.forEach(h => {
-      if (h.ts) {
+      if (h.ts && (!h.date || !/^\d{4}-\d{2}-\d{2}$/.test(h.date))) {
         h.date = getLocalDateStr(h.ts);
       }
     });
@@ -937,7 +960,6 @@ function renderDayRecords(dateStr) {
     const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
     title.textContent = `📝 ${dObj.getMonth()+1}月${dObj.getDate()}日（${weekdays[dObj.getDay()]}）记录`;
   }
-  const items = data.history.filter(h => h.date === dateStr);
   const checked = !!data.checkins[dateStr];
   const hint = document.getElementById('calendarDayHint');
   if (hint) {
@@ -949,8 +971,13 @@ function renderDayRecords(dateStr) {
       hint.className = 'calendar-day-hint';
     }
   }
-  if (items.length > 0) {
-    el.innerHTML = items.map(h => `<div class="history-item"><span class="hi-dot"></span><span>${h.text}</span><span class="hi-time">${h.time}分钟</span></div>`).join('');
+  const rows = [];
+  data.history.forEach((h, idx) => {
+    if (h.date !== dateStr) return;
+    rows.push(`<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${h.time}分钟</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
+  });
+  if (rows.length > 0) {
+    el.innerHTML = rows.join('');
     return;
   }
   // 有些打卡来自勾选任务而非计时，这类日期没有文字历史，用当天完成的任务补上
@@ -1033,6 +1060,77 @@ window.saveManualCheckin = function() {
   renderDayRecords(dateStr);
   document.getElementById('manualModal').classList.remove('show');
   resultEl.innerHTML = '';
+};
+
+// ===== 修改/删除打卡记录 =====
+let editingHistoryIndex = -1;
+
+function displayHistoryText(h) {
+  // 老记录会在名称后带 (N分钟)，展示时去掉，避免和右侧时长重复
+  return String(h.text || '').replace(/\s*\(\s*\d+\s*分钟\s*\)\s*$/, '');
+}
+
+function cleanupCheckinForDate(data, dateStr) {
+  if (!dateStr) return;
+  const hasHistory = data.history.some(h => h.date === dateStr);
+  const hasTask = data.tasks.some(t => t.completed && t.completedAt && getLocalDateStr(t.completedAt) === dateStr);
+  const hasDailyToday = dateStr === getLocalDateStr() && DAILY_FIXED.some(f => data.dailyFixed[f.id]);
+  if (!hasHistory && !hasTask && !hasDailyToday) delete data.checkins[dateStr];
+}
+
+window.editHistoryItem = function(idx) {
+  const data = loadData();
+  const h = data.history[idx];
+  if (!h) return;
+  editingHistoryIndex = idx;
+  document.getElementById('recordEditName').value = displayHistoryText(h).replace(/\s*（手动）\s*$/, '');
+  document.getElementById('recordEditDate').value = h.date || getLocalDateStr();
+  document.getElementById('recordEditMinutes').value = h.time || 30;
+  document.getElementById('recordEditResult').innerHTML = '';
+  document.getElementById('editRecordModal').classList.add('show');
+};
+function closeEditRecord() {
+  document.getElementById('editRecordModal').classList.remove('show');
+  editingHistoryIndex = -1;
+}
+window.saveEditRecord = function() {
+  const idx = editingHistoryIndex;
+  const data = loadData();
+  if (idx < 0 || !data.history[idx]) return;
+  const name = document.getElementById('recordEditName').value.trim();
+  const dateStr = document.getElementById('recordEditDate').value || getLocalDateStr();
+  const minutesRaw = parseInt(document.getElementById('recordEditMinutes').value, 10);
+  const resultEl = document.getElementById('recordEditResult');
+  if (!name) { resultEl.innerHTML = '<div class="sync-result error">请填写项目名称</div>'; return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
+  if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
+  const minutes = Math.min(600, minutesRaw);
+  const duplicated = data.history.some((h, i) => i !== idx && h.date === dateStr && h.time === minutes && h.text === name);
+  if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">已存在相同记录</div>'; return; }
+  const oldDate = data.history[idx].date;
+  data.history[idx] = { ...data.history[idx], text: name, time: minutes, date: dateStr };
+  cleanupCheckinForDate(data, oldDate);
+  data.checkins[dateStr] = true;
+  saveData(data);
+  scheduleAutoSync();
+  updateStats();
+  renderCalendarPage();
+  renderDayRecords(dateStr);
+  document.getElementById('editRecordModal').classList.remove('show');
+  editingHistoryIndex = -1;
+};
+window.deleteHistoryItem = function(idx) {
+  const data = loadData();
+  const h = data.history[idx];
+  if (!h) return;
+  if (!window.confirm('确定删除这条打卡记录吗？')) return;
+  data.history.splice(idx, 1);
+  cleanupCheckinForDate(data, h.date);
+  saveData(data);
+  scheduleAutoSync();
+  updateStats();
+  renderCalendarPage();
+  renderDayRecords(selectedCalendarDate || h.date);
 };
 
 // ===== 同步 =====
