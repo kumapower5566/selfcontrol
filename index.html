@@ -373,7 +373,7 @@
   <div class="modal-overlay" id="manualModal">
     <div class="modal">
       <div class="modal-title">📝 手动补记</div>
-      <div class="modal-sub">选分类会自动计入每日必做与完成率</div>
+      <div class="modal-sub">可补今天或昨天 · 选分类自动计入每日必做</div>
       <div class="manual-cat-row" id="manualCatRow">
         <button type="button" class="manual-cat" data-val="英语" onclick="pickManualCat('英语', this)">📖 英语</button>
         <button type="button" class="manual-cat" data-val="练习" onclick="pickManualCat('练习', this)">✏️ 练习</button>
@@ -1141,12 +1141,21 @@ function dismissSyncRemind() {
 }
 
 // ===== 手动补记 =====
+function dateOffsetStr(offsetDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return getLocalDateStr(d.getTime());
+}
+
 function openManualCheckin() {
   const nameInput = document.getElementById('manualName');
   nameInput.value = '';
   nameInput.style.display = '';
   nameInput.placeholder = '项目名称（必填）';
-  document.getElementById('manualDate').value = getLocalDateStr();
+  const dateEl = document.getElementById('manualDate');
+  dateEl.min = dateOffsetStr(-1);
+  dateEl.max = getLocalDateStr();
+  dateEl.value = getLocalDateStr();
   document.getElementById('manualMinutes').value = '30';
   document.getElementById('manualResult').innerHTML = '';
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
@@ -1183,6 +1192,7 @@ window.saveManualCheckin = function() {
   const dateStr = document.getElementById('manualDate').value || getLocalDateStr();
   const resultEl = document.getElementById('manualResult');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
+  if (dateStr < dateOffsetStr(-1) || dateStr > getLocalDateStr()) { resultEl.innerHTML = '<div class="sync-result error">只能补记今天或昨天</div>'; return; }
   if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
   const minutes = Math.min(600, minutesRaw);
   const data = loadData();
