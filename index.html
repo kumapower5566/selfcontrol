@@ -138,6 +138,11 @@
     .manual-cat { padding: 9px 2px; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.78rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .manual-cat:active { transform: scale(0.95); }
     .manual-cat.active { border-color: #667eea; background: #f0f2ff; color: #667eea; font-weight: 600; }
+    .manual-day-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .manual-day-label { font-size: 0.82rem; color: #888; flex-shrink: 0; }
+    .day-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.9rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .day-chip:active { transform: scale(0.96); }
+    .day-chip.active { border-color: #fcb69f; background: #fff7f0; color: #d76a35; font-weight: 600; }
     .manual-row { display: flex; gap: 10px; }
     .manual-row .sync-input { margin-bottom: 0; }
     .manual-row .manual-date-input { flex: 1.4; min-width: 0; }
@@ -381,10 +386,13 @@
         <button type="button" class="manual-cat" data-val="" onclick="pickManualCat('', this)">其他</button>
       </div>
       <input type="text" class="sync-input" id="manualName" placeholder="项目名称，如：英语、跑步" maxlength="40" style="ime-mode:auto">
-      <div class="manual-row">
-        <input type="date" class="sync-input manual-date-input" id="manualDate">
-        <input type="number" class="sync-input manual-min-input" id="manualMinutes" min="1" max="600" placeholder="时长(分)" inputmode="numeric">
+      <div class="manual-day-row">
+        <span class="manual-day-label">补哪天：</span>
+        <button type="button" class="day-chip active" id="manualDayTodayBtn" onclick="pickManualDay(0, this)">今天</button>
+        <button type="button" class="day-chip" id="manualDayYestBtn" onclick="pickManualDay(-1, this)">昨天</button>
       </div>
+      <input type="date" id="manualDate" style="display:none">
+      <input type="number" class="sync-input" id="manualMinutes" min="1" max="600" placeholder="时长（分钟）" inputmode="numeric">
       <div id="manualResult"></div>
       <div class="modal-btns">
         <button class="btn-skip" onclick="closeManualCheckin()">取消</button>
@@ -1156,6 +1164,8 @@ function openManualCheckin() {
   dateEl.min = dateOffsetStr(-1);
   dateEl.max = getLocalDateStr();
   dateEl.value = getLocalDateStr();
+  document.getElementById('manualDayTodayBtn').classList.add('active');
+  document.getElementById('manualDayYestBtn').classList.remove('active');
   document.getElementById('manualMinutes').value = '30';
   document.getElementById('manualResult').innerHTML = '';
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
@@ -1165,6 +1175,11 @@ function openManualCheckin() {
   if (otherBtn) otherBtn.classList.add('active');
   document.getElementById('manualModal').classList.add('show');
 }
+window.pickManualDay = function(offset, btn) {
+  document.getElementById('manualDate').value = dateOffsetStr(offset);
+  document.getElementById('manualDayTodayBtn').classList.toggle('active', offset === 0);
+  document.getElementById('manualDayYestBtn').classList.toggle('active', offset === -1);
+};
 window.pickManualCat = function(text, btn) {
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
   cats.forEach(c => c.classList.remove('active'));
