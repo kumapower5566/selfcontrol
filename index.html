@@ -429,8 +429,18 @@
   <div class="modal-overlay" id="editRecordModal">
     <div class="modal">
       <div class="modal-title">✏️ 修改打卡记录</div>
-      <div class="modal-sub">可以改项目名称、日期和时长</div>
-      <input type="text" class="sync-input" id="recordEditName" placeholder="项目名称" maxlength="40">
+      <div class="modal-sub">可以改分类、备注、日期和时长</div>
+      <div class="manual-cat-row" id="editCatRow">
+        <button type="button" class="manual-cat" data-val="英语" onclick="pickEditCat('英语', this)">📖 英语</button>
+        <button type="button" class="manual-cat" data-val="练习" onclick="pickEditCat('练习', this)">✏️ 练习</button>
+        <button type="button" class="manual-cat" data-val="运动" onclick="pickEditCat('运动', this)">🏃 运动</button>
+        <button type="button" class="manual-cat" data-val="" onclick="pickEditCat('', this)">其他</button>
+      </div>
+      <div class="manual-sub-row" id="editSubRow" style="display:none">
+        <button type="button" class="sub-chip" data-sub="练背" onclick="pickEditSub('练背', this)">练背</button>
+        <button type="button" class="sub-chip" data-sub="跳操拉伸" onclick="pickEditSub('跳操拉伸', this)">跳操 / 拉伸</button>
+      </div>
+      <input type="text" class="sync-input" id="recordEditName" placeholder="备注（选填）" maxlength="40">
       <div class="manual-row">
         <input type="date" class="sync-input manual-date-input" id="recordEditDate">
         <input type="number" class="sync-input manual-min-input" id="recordEditMinutes" min="1" max="600" placeholder="时长(分)" inputmode="numeric">
@@ -1359,6 +1369,9 @@ window.saveManualCheckin = function() {
 
 // ===== 修改/删除打卡记录 =====
 let editingHistoryIndex = -1;
+let editingOriginalManual = false;
+let editCatVal = '';
+let editSubVal = null;
 
 function displayHistoryText(h) {
   // 老记录会在名称后带 (N分钟)，展示时去掉，避免和右侧时长重复
@@ -1407,15 +1420,54 @@ function cleanupOrphanCheckins(data) {
   Object.keys(data.checkins).forEach(dateStr => cleanupCheckinForDate(data, dateStr));
 }
 
+function inferEditCategory(h) {
+  const key = classifyRecordKey(h);
+  if (key === 'word') return { cat: '英语', sub: null };
+  if (key === 'exercise') return { cat: '练习', sub: null };
+  if (key === 'skill_back') return { cat: '运动', sub: '练背' };
+  if (key === 'skill_cardio') return { cat: '运动', sub: '跳操拉伸' };
+  if (key === 'skill_generic') return { cat: '运动', sub: null };
+  return { cat: '', sub: null };
+}
+function setEditCatUI() {
+  document.querySelectorAll('#editCatRow .manual-cat').forEach(b => b.classList.toggle('active', b.dataset.val === editCatVal));
+  const row = document.getElementById('editSubRow');
+  row.style.display = editCatVal === '运动' ? 'flex' : 'none';
+  row.querySelectorAll('.sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === editSubVal));
+}
+window.pickEditCat = function(text, btn) {
+  editCatVal = text;
+  if (text !== '运动') editSubVal = null;
+  setEditCatUI();
+};
+window.pickEditSub = function(sub, btn) {
+  editSubVal = sub;
+  setEditCatUI();
+};
+function stripBaseFromTitle(rawText) {
+  let t = displayHistoryText({ text: rawText });
+  t = t.replace(/\s*（手动）\s*$/, '');
+  const bases = ['运动·跳操拉伸', '运动·练背', '运动', '英语', '练习'];
+  for (const b of bases) {
+    if (t.startsWith(b)) { t = t.slice(b.length); break; }
+  }
+  return t.replace(/^[（(]\s*/, '').replace(/\s*[）)]$/, '').trim();
+}
+
 window.editHistoryItem = function(idx) {
   const data = loadData();
   const h = data.history[idx];
   if (!h) return;
   editingHistoryIndex = idx;
-  document.getElementById('recordEditName').value = displayHistoryText(h).replace(/\s*（手动）\s*$/, '');
+  const inf = inferEditCategory(h);
+  editCatVal = inf.cat;
+  editSubVal = inf.sub;
+  editingOriginalManual = /（手动）$/.test(String(h.text || ''));
+  document.getElementById('recordEditName').value = stripBaseFromTitle(h.text);
   document.getElementById('recordEditDate').value = h.date || getLocalDateStr();
   document.getElementById('recordEditMinutes').value = h.time || 30;
   document.getElementById('recordEditResult').innerHTML = '';
+  setEditCatUI();
   document.getElementById('editRecordModal').classList.add('show');
 };
 function closeEditRecord() {
@@ -1426,18 +1478,34 @@ window.saveEditRecord = function() {
   const idx = editingHistoryIndex;
   const data = loadData();
   if (idx < 0 || !data.history[idx]) return;
-  const name = document.getElementById('recordEditName').value.trim();
+  const remark = document.getElementById('recordEditName').value.trim();
   const dateStr = document.getElementById('recordEditDate').value || getLocalDateStr();
   const minutesRaw = parseInt(document.getElementById('recordEditMinutes').value, 10);
   const resultEl = document.getElementById('recordEditResult');
-  if (!name) { resultEl.innerHTML = '<div class="sync-result error">请填写项目名称</div>'; return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
   if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
   const minutes = Math.min(600, minutesRaw);
-  const duplicated = data.history.some((h, i) => i !== idx && h.date === dateStr && h.time === minutes && h.text === name);
+  const module = DAILY_FIXED.find(f => f.text === editCatVal);
+  let text, cat, sub = null;
+  const manualSuffix = editingOriginalManual ? '（手动）' : '';
+  if (module) {
+    cat = module.id;
+    let base = module.text;
+    if (module.id === 'skill') {
+      if (!editSubVal) { resultEl.innerHTML = '<div class="sync-result error">请选择 练背 或 跳操拉伸</div>'; return; }
+      sub = editSubVal;
+      base = '运动·' + editSubVal;
+    }
+    text = base + (remark ? '（' + remark + '）' : '') + manualSuffix;
+  } else {
+    if (!remark) { resultEl.innerHTML = '<div class="sync-result error">请选择分类或填写项目名称</div>'; return; }
+    cat = 'other';
+    text = remark + manualSuffix;
+  }
+  const duplicated = data.history.some((h, i) => i !== idx && h.date === dateStr && h.time === minutes && h.text === text);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">已存在相同记录</div>'; return; }
   const oldDate = data.history[idx].date;
-  data.history[idx] = { ...data.history[idx], text: name, time: minutes, date: dateStr };
+  data.history[idx] = { ...data.history[idx], text, time: minutes, date: dateStr, cat, sub };
   recalcDailyFromTodayHistory(data);
   cleanupCheckinForDate(data, oldDate);
   data.checkins[dateStr] = true;
