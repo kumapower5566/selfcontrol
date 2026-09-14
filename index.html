@@ -143,6 +143,12 @@
     .day-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.9rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .day-chip:active { transform: scale(0.96); }
     .day-chip.active { border-color: #fcb69f; background: #fff7f0; color: #d76a35; font-weight: 600; }
+    .manual-sub-row, .timer-sub-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .timer-sub-row { margin: 0 0 8px; justify-content: center; }
+    .sub-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.55); font-size: 0.82rem; color: #6a5a4a; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .sub-chip.active { border-color: #667eea; background: #fff; color: #667eea; font-weight: 700; }
+    .manual-sub-row .sub-chip { border-color: #f0f0f0; background: #fff; color: #555; }
+    .manual-sub-row .sub-chip.active { border-color: #667eea; background: #f0f2ff; color: #667eea; }
     .manual-row { display: flex; gap: 10px; }
     .manual-row .sync-input { margin-bottom: 0; }
     .manual-row .manual-date-input { flex: 1.4; min-width: 0; }
@@ -233,6 +239,10 @@
     </div>
     <div class="card timer-card-compact">
       <div class="timer-task-label" id="timerTaskLabel">选择一个任务开始计时</div>
+      <div class="timer-sub-row" id="timerSubRow" style="display:none">
+        <button type="button" class="sub-chip active" data-sub="练背" onclick="pickTimerSub('练背', this)">练背</button>
+        <button type="button" class="sub-chip" data-sub="跳操拉伸" onclick="pickTimerSub('跳操拉伸', this)">跳操拉伸</button>
+      </div>
       <div class="timer-display">
         <div class="timer-time" id="timerDisplay">25:00</div>
         <div class="timer-status" id="timerStatus">选择任务，开始专注</div>
@@ -384,6 +394,10 @@
         <button type="button" class="manual-cat" data-val="练习" onclick="pickManualCat('练习', this)">✏️ 练习</button>
         <button type="button" class="manual-cat" data-val="运动" onclick="pickManualCat('运动', this)">🏃 运动</button>
         <button type="button" class="manual-cat" data-val="" onclick="pickManualCat('', this)">其他</button>
+      </div>
+      <div class="manual-sub-row" id="manualSubRow" style="display:none">
+        <button type="button" class="sub-chip" data-sub="练背" onclick="pickManualSub('练背', this)">练背（可坐着做）</button>
+        <button type="button" class="sub-chip" data-sub="跳操拉伸" onclick="pickManualSub('跳操拉伸', this)">跳操 / 拉伸</button>
       </div>
       <input type="text" class="sync-input" id="manualName" placeholder="项目名称，如：英语、跑步" maxlength="40" style="ime-mode:auto">
       <div class="manual-day-row">
@@ -537,6 +551,7 @@ let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
 let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
 let currentTaskIndex = -1;
 let currentDailyId = null; // 当前选择的每日必做ID
+let currentExerciseSub = '练背'; // 运动子类型：练背 / 跳操拉伸
 const timerDisplay = document.getElementById('timerDisplay');
 const timerStatus = document.getElementById('timerStatus');
 const timerTaskLabel = document.getElementById('timerTaskLabel');
@@ -562,7 +577,8 @@ function updateTimerTaskLabel() {
       startBtn.disabled = false;
     }
   } else if (moduleItem) {
-    timerTaskLabel.textContent = '🎯 ' + moduleItem.icon + ' ' + moduleItem.text;
+    timerTaskLabel.textContent = '🎯 ' + moduleItem.icon + ' ' +
+      (moduleItem.id === 'skill' ? '运动 · ' + currentExerciseSub : moduleItem.text);
     timerTaskLabel.classList.add('active');
     startBtn.disabled = false;
   } else {
@@ -571,6 +587,20 @@ function updateTimerTaskLabel() {
     startBtn.disabled = true;
   }
 }
+
+function setTimerSubRowVisible(visible) {
+  const row = document.getElementById('timerSubRow');
+  if (!row) return;
+  row.style.display = visible ? 'flex' : 'none';
+  if (visible) {
+    row.querySelectorAll('.sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === currentExerciseSub));
+  }
+}
+window.pickTimerSub = function(sub, btn) {
+  currentExerciseSub = sub;
+  document.querySelectorAll('#timerSubRow .sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
+  updateTimerTaskLabel();
+};
 
 // 完成提醒（声音 / 震动 / 浏览器通知）
 let audioCtx = null;
@@ -736,11 +766,19 @@ function finishAndSave(minutes, note) {
   const data = loadData();
   const today = getLocalDateStr();
   let taskText = '';
+  let completionCat = 'other';
+  let completionSub = null;
 
   // 每日必做完成
   if (currentDailyId) {
     const moduleItem = DAILY_FIXED.find(f => f.id === currentDailyId);
-    taskText = moduleItem ? moduleItem.text : '专注';
+    completionCat = currentDailyId;
+    if (currentDailyId === 'skill') {
+      completionSub = currentExerciseSub;
+      taskText = '运动·' + currentExerciseSub;
+    } else {
+      taskText = moduleItem ? moduleItem.text : '专注';
+    }
     data.dailyFixed[currentDailyId] = true;
     currentDailyId = null;
   }
@@ -749,6 +787,8 @@ function finishAndSave(minutes, note) {
   if (currentTaskIndex >= 0 && data.tasks[currentTaskIndex]) {
     const task = data.tasks[currentTaskIndex];
     taskText = task.text;
+    completionCat = 'other';
+    completionSub = null;
     task.completed = true;
     if (note) task.text = task.text + ' - ' + note;
     else if (minutes >= 5) task.text = task.text + ' (' + minutes + '分钟)';
@@ -758,7 +798,7 @@ function finishAndSave(minutes, note) {
   // 加入历史记录
   let historyText = taskText || '专注' + minutes + '分钟';
   if (note) historyText = historyText + ' → ' + note;
-  data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now() });
+  data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now(), cat: completionCat, sub: completionSub });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   markDataUpdated(data);
   saveData(data);
@@ -766,6 +806,7 @@ function finishAndSave(minutes, note) {
   autoCheckin();
   currentTaskIndex = -1;
   setTimerControlsIdle('专注记录已保存 ✅');
+  setTimerSubRowVisible(false);
   updateTimerDisplay();
   updateTimerTaskLabel();
   renderTasks();
@@ -838,6 +879,7 @@ window.selectDailyModule = function(id) {
     currentPreset = moduleItem.minutes;
     presetBtns.forEach(b => b.classList.toggle('active', parseInt(b.dataset.minutes) === moduleItem.minutes));
   }
+  setTimerSubRowVisible(currentDailyId === 'skill');
   remainingSeconds = currentPreset * 60;
   startBtn.textContent = '开始';
   resetBtn.style.display = 'none';
@@ -894,6 +936,7 @@ window.startTaskTimer = function(i) {
   timerInitialSeconds = null;
   currentTaskIndex = i;
   currentDailyId = null; // 清除每日必做选择
+  setTimerSubRowVisible(false);
   remainingSeconds = currentPreset * 60;
   startBtn.textContent = '开始';
   resetBtn.style.display = 'none';
@@ -1154,6 +1197,7 @@ function dateOffsetStr(offsetDays) {
   d.setDate(d.getDate() + offsetDays);
   return getLocalDateStr(d.getTime());
 }
+let manualExerciseSub = null;
 
 function openManualCheckin() {
   const nameInput = document.getElementById('manualName');
@@ -1170,6 +1214,9 @@ function openManualCheckin() {
   document.getElementById('manualResult').innerHTML = '';
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
   cats.forEach(c => c.classList.remove('active'));
+  document.getElementById('manualSubRow').style.display = 'none';
+  document.querySelectorAll('#manualSubRow .sub-chip').forEach(b => b.classList.remove('active'));
+  manualExerciseSub = null;
   // 默认“其他”：需要填项目名称；点上面三类则下方变成选填备注
   const otherBtn = document.querySelector('#manualCatRow .manual-cat[data-val=""]');
   if (otherBtn) otherBtn.classList.add('active');
@@ -1187,6 +1234,13 @@ window.pickManualCat = function(text, btn) {
   const nameEl = document.getElementById('manualName');
   nameEl.value = '';
   nameEl.style.display = '';
+  const isSport = text === '运动';
+  const subRow = document.getElementById('manualSubRow');
+  subRow.style.display = isSport ? 'flex' : 'none';
+  if (!isSport) {
+    manualExerciseSub = null;
+    subRow.querySelectorAll('.sub-chip').forEach(b => b.classList.remove('active'));
+  }
   if (text) {
     // 已选每日必做类别：下方框只是备注，不影响分类
     nameEl.placeholder = '备注（选填），如：跑步 5 公里';
@@ -1194,6 +1248,10 @@ window.pickManualCat = function(text, btn) {
     nameEl.placeholder = '项目名称，如：跑步、阅读';
     nameEl.focus();
   }
+};
+window.pickManualSub = function(sub, btn) {
+  manualExerciseSub = sub;
+  document.querySelectorAll('#manualSubRow .sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
 };
 function closeManualCheckin() {
   document.getElementById('manualModal').classList.remove('show');
@@ -1211,11 +1269,17 @@ window.saveManualCheckin = function() {
   if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
   const minutes = Math.min(600, minutesRaw);
   const data = loadData();
-  let historyText, cat;
+  let historyText, cat, sub = null;
   if (module) {
     // 选了每日必做类别：框内只是备注，类别固定为该模块
     cat = module.id;
-    historyText = module.text + (name ? '（' + name + '）' : '') + '（手动）';
+    let base = module.text;
+    if (module.id === 'skill') {
+      if (!manualExerciseSub) { resultEl.innerHTML = '<div class="sync-result error">请选择 练背 或 跳操拉伸</div>'; return; }
+      sub = manualExerciseSub;
+      base = '运动·' + manualExerciseSub;
+    }
+    historyText = base + (name ? '（' + name + '）' : '') + '（手动）';
   } else {
     // 其他：框内文字就是项目名
     cat = 'other';
@@ -1224,7 +1288,7 @@ window.saveManualCheckin = function() {
   }
   const duplicated = data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
-  data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat });
+  data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat, sub });
   if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
   data.checkins[dateStr] = true;
   if (dateStr === getLocalDateStr()) recalcDailyFromTodayHistory(data);
@@ -1253,6 +1317,8 @@ function historyMatchesModule(title, moduleText) {
     t.startsWith(moduleText + ' ') ||
     t.startsWith(moduleText + '（') ||
     t.startsWith(moduleText + '(') ||
+    t.startsWith(moduleText + '·') ||
+    t.startsWith(moduleText + '・') ||
     t.startsWith(moduleText + '→');
 }
 
