@@ -181,8 +181,10 @@
     .cat-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #faf9fb; border-radius: 14px; }
     .cat-row .cat-icon { font-size: 1.2rem; }
     .cat-row .cat-name { flex: 1; font-size: 0.9rem; color: #555; }
-    .cat-row .cat-count { font-size: 0.9rem; font-weight: 700; color: #667eea; }
-    .cat-row .cat-min { font-size: 0.72rem; color: #aaa; margin-left: 6px; }
+    .cat-row .cat-right { text-align: right; display: flex; flex-direction: column; gap: 2px; }
+    .cat-row .cat-today { font-size: 0.9rem; font-weight: 700; color: #667eea; }
+    .cat-row .cat-today.none { color: #ccc; font-weight: 500; }
+    .cat-row .cat-total { font-size: 0.7rem; color: #aaa; }
     .rate-bar-wrap { margin: 16px 0 4px; }
     .rate-bar-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: #999; margin-bottom: 6px; }
     .rate-bar { height: 8px; border-radius: 4px; background: #eee; overflow: hidden; }
@@ -563,7 +565,7 @@ let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
 let currentTaskIndex = -1;
 let currentDailyId = null; // 当前选择的每日必做ID
 const MODULE_SUBTYPES = {
-  word: ['复习单词', '背新单词', '习题', '听力'],
+  word: ['单词', '习题', '听力'],
   skill: ['练背', '跳操拉伸']
 };
 function subtypesFor(moduleId) { return MODULE_SUBTYPES[moduleId] || null; }
@@ -573,7 +575,7 @@ function renderSubChips(container, moduleId, selected, handlerName) {
     `<button type="button" class="sub-chip${s === selected ? ' active' : ''}" data-sub="${s}" onclick="${handlerName}('${s}', this)">${s}</button>`
   ).join('');
 }
-let currentSub = { word: '复习单词', skill: '练背' };
+let currentSub = { word: '单词', skill: '练背' };
 const timerDisplay = document.getElementById('timerDisplay');
 const timerStatus = document.getElementById('timerStatus');
 const timerTaskLabel = document.getElementById('timerTaskLabel');
@@ -1099,54 +1101,58 @@ function renderInsights(data) {
 
 function classifyRecordKey(h) {
   const t = String(h.text || '');
-  const wordSubMap = { '复习单词': 'word_review', '背新单词': 'word_new', '习题': 'word_exam', '听力': 'word_listen' };
-  if (h.cat === 'word') return wordSubMap[h.sub] || 'word_generic';
+  if (h.cat === 'word') {
+    if (h.sub === '习题') return 'word_exam';
+    if (h.sub === '听力') return 'word_listen';
+    return 'word_vocab';
+  }
   if (h.cat === 'exercise') return 'exercise';
   if (h.cat === 'skill') return h.sub === '跳操拉伸' ? 'skill_cardio' : 'skill_back';
   if (h.cat === 'other') return 'other';
   // 旧记录没有 cat 字段，按文字判断
-  if (t.includes('复习单词')) return 'word_review';
-  if (t.includes('背新单词')) return 'word_new';
   if (t.startsWith('英语·习题') || t.includes('英语习题')) return 'word_exam';
   if (t.includes('听力')) return 'word_listen';
+  if (t.includes('复习单词') || t.includes('背新单词') || t.includes('单词')) return 'word_vocab';
   if (t.includes('跳操') || t.includes('拉伸')) return 'skill_cardio';
   if (t.includes('练背')) return 'skill_back';
   if (t.startsWith('运动')) return 'skill_generic';
-  if (t.startsWith('英语')) return 'word_generic';
+  if (t.startsWith('英语')) return 'word_vocab';
   if (t.startsWith('练习')) return 'exercise';
   return 'other';
 }
 
 const CATEGORY_META = [
-  { key: 'word_review', icon: '🔁', name: '复习单词' },
-  { key: 'word_new', icon: '🆕', name: '背新单词' },
+  { key: 'word_vocab', icon: '📖', name: '单词（复习+新词）' },
   { key: 'word_exam', icon: '📝', name: '英语习题' },
   { key: 'word_listen', icon: '🎧', name: '听力' },
   { key: 'exercise', icon: '✏️', name: '练习' },
   { key: 'skill_back', icon: '💪', name: '练背' },
   { key: 'skill_cardio', icon: '🤸', name: '跳操 / 拉伸' },
-  { key: 'word_generic', icon: '📖', name: '英语（未分子类）' },
   { key: 'skill_generic', icon: '🏃', name: '运动（未分子类）' },
   { key: 'other', icon: '📌', name: '其他' }
 ];
-const ALWAYS_SHOW_CATS = ['word_review', 'word_new', 'word_exam', 'word_listen', 'exercise', 'skill_back', 'skill_cardio'];
+const ALWAYS_SHOW_CATS = ['word_vocab', 'word_exam', 'word_listen', 'exercise', 'skill_back', 'skill_cardio'];
 
 function renderCategoryStats(data) {
   const el = document.getElementById('catStats');
   if (!el) return;
+  const today = getLocalDateStr();
   const agg = {};
   (data.history || []).forEach(h => {
     const key = classifyRecordKey(h);
-    if (!agg[key]) agg[key] = { count: 0, minutes: 0 };
+    if (!agg[key]) agg[key] = { count: 0, minutes: 0, todayMinutes: 0 };
     agg[key].count++;
     agg[key].minutes += Number(h.time) || 0;
+    if (h.date === today) agg[key].todayMinutes += Number(h.time) || 0;
   });
   el.innerHTML = CATEGORY_META.filter(m => {
     if (ALWAYS_SHOW_CATS.includes(m.key)) return true;
     return agg[m.key] && agg[m.key].count > 0;
   }).map(m => {
-    const a = agg[m.key] || { count: 0, minutes: 0 };
-    return `<div class="cat-row"><span class="cat-icon">${m.icon}</span><span class="cat-name">${m.name}</span><span class="cat-count">${a.count} 次</span><span class="cat-min">${a.minutes} 分钟</span></div>`;
+    const a = agg[m.key] || { count: 0, minutes: 0, todayMinutes: 0 };
+    return `<div class="cat-row"><span class="cat-icon">${m.icon}</span><span class="cat-name">${m.name}</span>` +
+      `<span class="cat-right"><span class="cat-today${a.todayMinutes ? '' : ' none'}">今日 ${a.todayMinutes} 分</span>` +
+      `<span class="cat-total">累计 ${a.count} 次 · ${a.minutes} 分钟</span></span></div>`;
   }).join('');
 }
 
@@ -1438,11 +1444,9 @@ function cleanupOrphanCheckins(data) {
 
 function inferEditCategory(h) {
   const key = classifyRecordKey(h);
-  if (key === 'word_review') return { cat: '英语', sub: '复习单词' };
-  if (key === 'word_new') return { cat: '英语', sub: '背新单词' };
+  if (key === 'word_vocab') return { cat: '英语', sub: '单词' };
   if (key === 'word_exam') return { cat: '英语', sub: '习题' };
   if (key === 'word_listen') return { cat: '英语', sub: '听力' };
-  if (key === 'word_generic') return { cat: '英语', sub: null };
   if (key === 'exercise') return { cat: '练习', sub: null };
   if (key === 'skill_back') return { cat: '运动', sub: '练背' };
   if (key === 'skill_cardio') return { cat: '运动', sub: '跳操拉伸' };
@@ -1476,7 +1480,7 @@ window.pickEditSub = function(sub, btn) {
 function stripBaseFromTitle(rawText) {
   let t = displayHistoryText({ text: rawText });
   t = t.replace(/\s*（手动）\s*$/, '');
-  const bases = ['英语·复习单词', '英语·背新单词', '英语·习题', '英语·听力',
+  const bases = ['英语·复习单词', '英语·背新单词', '英语·单词', '英语·习题', '英语·听力',
     '运动·跳操拉伸', '运动·练背', '运动', '英语', '练习'];
   for (const b of bases) {
     if (t.startsWith(b)) { t = t.slice(b.length); break; }
