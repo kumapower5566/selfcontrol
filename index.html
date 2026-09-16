@@ -820,7 +820,7 @@ function finishAndSave(minutes, note) {
   let historyText = taskText || '专注' + minutes + '分钟';
   if (note) historyText = historyText + ' → ' + note;
   data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now(), cat: completionCat, sub: completionSub });
-  if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
+  if (data.history.length > 10000) data.history = data.history.slice(0, 10000);
   markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
@@ -1375,7 +1375,7 @@ window.saveManualCheckin = function() {
   const duplicated = data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
   data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat, sub });
-  if (data.history.length > 3000) data.history = data.history.slice(0, 3000);
+  if (data.history.length > 10000) data.history = data.history.slice(0, 10000);
   data.checkins[dateStr] = true;
   if (dateStr === getLocalDateStr()) recalcDailyFromTodayHistory(data);
   markDataUpdated(data);
@@ -1721,7 +1721,7 @@ function mergeHistory(localHistory, remoteHistory) {
     });
   });
   out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  return out.slice(0, 3000);
+  return out.slice(0, 10000);
 }
 
 function mergeCloudData(local, remote) {
