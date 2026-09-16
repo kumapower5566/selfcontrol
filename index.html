@@ -143,8 +143,8 @@
     .day-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.9rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .day-chip:active { transform: scale(0.96); }
     .day-chip.active { border-color: #fcb69f; background: #fff7f0; color: #d76a35; font-weight: 600; }
-    .manual-sub-row, .timer-sub-row { display: flex; gap: 8px; margin-bottom: 12px; }
-    .timer-sub-row { margin: 0 0 8px; justify-content: center; }
+    .manual-sub-row, .timer-sub-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .timer-sub-row { margin: 0 0 8px; }
     .sub-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.55); font-size: 0.82rem; color: #6a5a4a; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .sub-chip.active { border-color: #667eea; background: #fff; color: #667eea; font-weight: 700; }
     .manual-sub-row .sub-chip { border-color: #f0f0f0; background: #fff; color: #555; }
@@ -245,10 +245,7 @@
     </div>
     <div class="card timer-card-compact">
       <div class="timer-task-label" id="timerTaskLabel">选择一个任务开始计时</div>
-      <div class="timer-sub-row" id="timerSubRow" style="display:none">
-        <button type="button" class="sub-chip active" data-sub="练背" onclick="pickTimerSub('练背', this)">练背</button>
-        <button type="button" class="sub-chip" data-sub="跳操拉伸" onclick="pickTimerSub('跳操拉伸', this)">跳操拉伸</button>
-      </div>
+      <div class="timer-sub-row" id="timerSubRow" style="display:none"></div>
       <div class="timer-display">
         <div class="timer-time" id="timerDisplay">25:00</div>
         <div class="timer-status" id="timerStatus">选择任务，开始专注</div>
@@ -405,10 +402,7 @@
         <button type="button" class="manual-cat" data-val="运动" onclick="pickManualCat('运动', this)">🏃 运动</button>
         <button type="button" class="manual-cat" data-val="" onclick="pickManualCat('', this)">其他</button>
       </div>
-      <div class="manual-sub-row" id="manualSubRow" style="display:none">
-        <button type="button" class="sub-chip" data-sub="练背" onclick="pickManualSub('练背', this)">练背（可坐着做）</button>
-        <button type="button" class="sub-chip" data-sub="跳操拉伸" onclick="pickManualSub('跳操拉伸', this)">跳操 / 拉伸</button>
-      </div>
+      <div class="manual-sub-row" id="manualSubRow" style="display:none"></div>
       <input type="text" class="sync-input" id="manualName" placeholder="项目名称，如：英语、跑步" maxlength="40" style="ime-mode:auto">
       <div class="manual-day-row">
         <span class="manual-day-label">补哪天：</span>
@@ -436,10 +430,7 @@
         <button type="button" class="manual-cat" data-val="运动" onclick="pickEditCat('运动', this)">🏃 运动</button>
         <button type="button" class="manual-cat" data-val="" onclick="pickEditCat('', this)">其他</button>
       </div>
-      <div class="manual-sub-row" id="editSubRow" style="display:none">
-        <button type="button" class="sub-chip" data-sub="练背" onclick="pickEditSub('练背', this)">练背</button>
-        <button type="button" class="sub-chip" data-sub="跳操拉伸" onclick="pickEditSub('跳操拉伸', this)">跳操 / 拉伸</button>
-      </div>
+      <div class="manual-sub-row" id="editSubRow" style="display:none"></div>
       <input type="text" class="sync-input" id="recordEditName" placeholder="备注（选填）" maxlength="40">
       <div class="manual-row">
         <input type="date" class="sync-input manual-date-input" id="recordEditDate">
@@ -571,7 +562,18 @@ let timerInterval = null, remainingSeconds = 25 * 60, isRunning = false;
 let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
 let currentTaskIndex = -1;
 let currentDailyId = null; // 当前选择的每日必做ID
-let currentExerciseSub = '练背'; // 运动子类型：练背 / 跳操拉伸
+const MODULE_SUBTYPES = {
+  word: ['复习单词', '背新单词', '习题', '听力'],
+  skill: ['练背', '跳操拉伸']
+};
+function subtypesFor(moduleId) { return MODULE_SUBTYPES[moduleId] || null; }
+function renderSubChips(container, moduleId, selected, handlerName) {
+  const list = subtypesFor(moduleId) || [];
+  container.innerHTML = list.map(s =>
+    `<button type="button" class="sub-chip${s === selected ? ' active' : ''}" data-sub="${s}" onclick="${handlerName}('${s}', this)">${s}</button>`
+  ).join('');
+}
+let currentSub = { word: '复习单词', skill: '练背' };
 const timerDisplay = document.getElementById('timerDisplay');
 const timerStatus = document.getElementById('timerStatus');
 const timerTaskLabel = document.getElementById('timerTaskLabel');
@@ -597,8 +599,8 @@ function updateTimerTaskLabel() {
       startBtn.disabled = false;
     }
   } else if (moduleItem) {
-    timerTaskLabel.textContent = '🎯 ' + moduleItem.icon + ' ' +
-      (moduleItem.id === 'skill' ? '运动 · ' + currentExerciseSub : moduleItem.text);
+    const sub = subtypesFor(moduleItem.id) ? currentSub[moduleItem.id] : null;
+    timerTaskLabel.textContent = '🎯 ' + moduleItem.icon + ' ' + moduleItem.text + (sub ? ' · ' + sub : '');
     timerTaskLabel.classList.add('active');
     startBtn.disabled = false;
   } else {
@@ -608,16 +610,16 @@ function updateTimerTaskLabel() {
   }
 }
 
-function setTimerSubRowVisible(visible) {
+function setTimerSubRowVisible(moduleId) {
   const row = document.getElementById('timerSubRow');
   if (!row) return;
-  row.style.display = visible ? 'flex' : 'none';
-  if (visible) {
-    row.querySelectorAll('.sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === currentExerciseSub));
-  }
+  const list = subtypesFor(moduleId);
+  if (!list) { row.style.display = 'none'; row.innerHTML = ''; return; }
+  row.style.display = 'grid';
+  renderSubChips(row, moduleId, currentSub[moduleId], 'pickTimerSub');
 }
 window.pickTimerSub = function(sub, btn) {
-  currentExerciseSub = sub;
+  if (currentDailyId) currentSub[currentDailyId] = sub;
   document.querySelectorAll('#timerSubRow .sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
   updateTimerTaskLabel();
 };
@@ -793,12 +795,9 @@ function finishAndSave(minutes, note) {
   if (currentDailyId) {
     const moduleItem = DAILY_FIXED.find(f => f.id === currentDailyId);
     completionCat = currentDailyId;
-    if (currentDailyId === 'skill') {
-      completionSub = currentExerciseSub;
-      taskText = '运动·' + currentExerciseSub;
-    } else {
-      taskText = moduleItem ? moduleItem.text : '专注';
-    }
+    const sub = subtypesFor(currentDailyId) ? currentSub[currentDailyId] : null;
+    completionSub = sub;
+    taskText = moduleItem ? moduleItem.text + (sub ? '·' + sub : '') : '专注';
     data.dailyFixed[currentDailyId] = true;
     currentDailyId = null;
   }
@@ -826,7 +825,7 @@ function finishAndSave(minutes, note) {
   autoCheckin();
   currentTaskIndex = -1;
   setTimerControlsIdle('专注记录已保存 ✅');
-  setTimerSubRowVisible(false);
+  setTimerSubRowVisible(null);
   updateTimerDisplay();
   updateTimerTaskLabel();
   renderTasks();
@@ -899,7 +898,7 @@ window.selectDailyModule = function(id) {
     currentPreset = moduleItem.minutes;
     presetBtns.forEach(b => b.classList.toggle('active', parseInt(b.dataset.minutes) === moduleItem.minutes));
   }
-  setTimerSubRowVisible(currentDailyId === 'skill');
+  setTimerSubRowVisible(subtypesFor(currentDailyId) ? currentDailyId : null);
   remainingSeconds = currentPreset * 60;
   startBtn.textContent = '开始';
   resetBtn.style.display = 'none';
@@ -956,7 +955,7 @@ window.startTaskTimer = function(i) {
   timerInitialSeconds = null;
   currentTaskIndex = i;
   currentDailyId = null; // 清除每日必做选择
-  setTimerSubRowVisible(false);
+  setTimerSubRowVisible(null);
   remainingSeconds = currentPreset * 60;
   startBtn.textContent = '开始';
   resetBtn.style.display = 'none';
@@ -1100,27 +1099,37 @@ function renderInsights(data) {
 
 function classifyRecordKey(h) {
   const t = String(h.text || '');
-  if (h.cat === 'word') return 'word';
+  const wordSubMap = { '复习单词': 'word_review', '背新单词': 'word_new', '习题': 'word_exam', '听力': 'word_listen' };
+  if (h.cat === 'word') return wordSubMap[h.sub] || 'word_generic';
   if (h.cat === 'exercise') return 'exercise';
   if (h.cat === 'skill') return h.sub === '跳操拉伸' ? 'skill_cardio' : 'skill_back';
   if (h.cat === 'other') return 'other';
   // 旧记录没有 cat 字段，按文字判断
+  if (t.includes('复习单词')) return 'word_review';
+  if (t.includes('背新单词')) return 'word_new';
+  if (t.startsWith('英语·习题') || t.includes('英语习题')) return 'word_exam';
+  if (t.includes('听力')) return 'word_listen';
   if (t.includes('跳操') || t.includes('拉伸')) return 'skill_cardio';
   if (t.includes('练背')) return 'skill_back';
   if (t.startsWith('运动')) return 'skill_generic';
-  if (t.startsWith('英语')) return 'word';
+  if (t.startsWith('英语')) return 'word_generic';
   if (t.startsWith('练习')) return 'exercise';
   return 'other';
 }
 
 const CATEGORY_META = [
-  { key: 'word', icon: '📖', name: '英语' },
+  { key: 'word_review', icon: '🔁', name: '复习单词' },
+  { key: 'word_new', icon: '🆕', name: '背新单词' },
+  { key: 'word_exam', icon: '📝', name: '英语习题' },
+  { key: 'word_listen', icon: '🎧', name: '听力' },
   { key: 'exercise', icon: '✏️', name: '练习' },
   { key: 'skill_back', icon: '💪', name: '练背' },
   { key: 'skill_cardio', icon: '🤸', name: '跳操 / 拉伸' },
+  { key: 'word_generic', icon: '📖', name: '英语（未分子类）' },
   { key: 'skill_generic', icon: '🏃', name: '运动（未分子类）' },
   { key: 'other', icon: '📌', name: '其他' }
 ];
+const ALWAYS_SHOW_CATS = ['word_review', 'word_new', 'word_exam', 'word_listen', 'exercise', 'skill_back', 'skill_cardio'];
 
 function renderCategoryStats(data) {
   const el = document.getElementById('catStats');
@@ -1133,8 +1142,8 @@ function renderCategoryStats(data) {
     agg[key].minutes += Number(h.time) || 0;
   });
   el.innerHTML = CATEGORY_META.filter(m => {
-    if (m.key === 'other' || m.key === 'skill_generic') return agg[m.key] && agg[m.key].count > 0;
-    return true;
+    if (ALWAYS_SHOW_CATS.includes(m.key)) return true;
+    return agg[m.key] && agg[m.key].count > 0;
   }).map(m => {
     const a = agg[m.key] || { count: 0, minutes: 0 };
     return `<div class="cat-row"><span class="cat-icon">${m.icon}</span><span class="cat-name">${m.name}</span><span class="cat-count">${a.count} 次</span><span class="cat-min">${a.minutes} 分钟</span></div>`;
@@ -1261,7 +1270,7 @@ function dateOffsetStr(offsetDays) {
   d.setDate(d.getDate() + offsetDays);
   return getLocalDateStr(d.getTime());
 }
-let manualExerciseSub = null;
+let manualSubChoice = { word: null, skill: null };
 
 function openManualCheckin() {
   const nameInput = document.getElementById('manualName');
@@ -1279,8 +1288,8 @@ function openManualCheckin() {
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
   cats.forEach(c => c.classList.remove('active'));
   document.getElementById('manualSubRow').style.display = 'none';
-  document.querySelectorAll('#manualSubRow .sub-chip').forEach(b => b.classList.remove('active'));
-  manualExerciseSub = null;
+  document.getElementById('manualSubRow').innerHTML = '';
+  manualSubChoice = { word: null, skill: null };
   // 默认“其他”：需要填项目名称；点上面三类则下方变成选填备注
   const otherBtn = document.querySelector('#manualCatRow .manual-cat[data-val=""]');
   if (otherBtn) otherBtn.classList.add('active');
@@ -1298,12 +1307,15 @@ window.pickManualCat = function(text, btn) {
   const nameEl = document.getElementById('manualName');
   nameEl.value = '';
   nameEl.style.display = '';
-  const isSport = text === '运动';
+  const module = DAILY_FIXED.find(f => f.text === text);
+  const subList = module ? subtypesFor(module.id) : null;
   const subRow = document.getElementById('manualSubRow');
-  subRow.style.display = isSport ? 'flex' : 'none';
-  if (!isSport) {
-    manualExerciseSub = null;
-    subRow.querySelectorAll('.sub-chip').forEach(b => b.classList.remove('active'));
+  if (subList) {
+    subRow.style.display = 'grid';
+    renderSubChips(subRow, module.id, manualSubChoice[module.id], 'pickManualSub');
+  } else {
+    subRow.style.display = 'none';
+    subRow.innerHTML = '';
   }
   if (text) {
     // 已选每日必做类别：下方框只是备注，不影响分类
@@ -1314,7 +1326,9 @@ window.pickManualCat = function(text, btn) {
   }
 };
 window.pickManualSub = function(sub, btn) {
-  manualExerciseSub = sub;
+  const activeCatEl = document.querySelector('#manualCatRow .manual-cat.active');
+  const module = activeCatEl ? DAILY_FIXED.find(f => f.text === activeCatEl.dataset.val) : null;
+  if (module) manualSubChoice[module.id] = sub;
   document.querySelectorAll('#manualSubRow .sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
 };
 function closeManualCheckin() {
@@ -1338,10 +1352,12 @@ window.saveManualCheckin = function() {
     // 选了每日必做类别：框内只是备注，类别固定为该模块
     cat = module.id;
     let base = module.text;
-    if (module.id === 'skill') {
-      if (!manualExerciseSub) { resultEl.innerHTML = '<div class="sync-result error">请选择 练背 或 跳操拉伸</div>'; return; }
-      sub = manualExerciseSub;
-      base = '运动·' + manualExerciseSub;
+    const subList = subtypesFor(module.id);
+    if (subList) {
+      const chosen = manualSubChoice[module.id];
+      if (!chosen) { resultEl.innerHTML = '<div class="sync-result error">请选择：' + subList.join(' / ') + '</div>'; return; }
+      sub = chosen;
+      base = module.text + '·' + chosen;
     }
     historyText = base + (name ? '（' + name + '）' : '') + '（手动）';
   } else {
@@ -1422,7 +1438,11 @@ function cleanupOrphanCheckins(data) {
 
 function inferEditCategory(h) {
   const key = classifyRecordKey(h);
-  if (key === 'word') return { cat: '英语', sub: null };
+  if (key === 'word_review') return { cat: '英语', sub: '复习单词' };
+  if (key === 'word_new') return { cat: '英语', sub: '背新单词' };
+  if (key === 'word_exam') return { cat: '英语', sub: '习题' };
+  if (key === 'word_listen') return { cat: '英语', sub: '听力' };
+  if (key === 'word_generic') return { cat: '英语', sub: null };
   if (key === 'exercise') return { cat: '练习', sub: null };
   if (key === 'skill_back') return { cat: '运动', sub: '练背' };
   if (key === 'skill_cardio') return { cat: '运动', sub: '跳操拉伸' };
@@ -1432,12 +1452,21 @@ function inferEditCategory(h) {
 function setEditCatUI() {
   document.querySelectorAll('#editCatRow .manual-cat').forEach(b => b.classList.toggle('active', b.dataset.val === editCatVal));
   const row = document.getElementById('editSubRow');
-  row.style.display = editCatVal === '运动' ? 'flex' : 'none';
-  row.querySelectorAll('.sub-chip').forEach(b => b.classList.toggle('active', b.dataset.sub === editSubVal));
+  const module = DAILY_FIXED.find(f => f.text === editCatVal);
+  const list = module ? subtypesFor(module.id) : null;
+  if (list) {
+    row.style.display = 'grid';
+    renderSubChips(row, module.id, editSubVal, 'pickEditSub');
+  } else {
+    row.style.display = 'none';
+    row.innerHTML = '';
+  }
 }
 window.pickEditCat = function(text, btn) {
   editCatVal = text;
-  if (text !== '运动') editSubVal = null;
+  const module = DAILY_FIXED.find(f => f.text === text);
+  const list = module ? subtypesFor(module.id) : null;
+  if (!list || (editSubVal && !list.includes(editSubVal))) editSubVal = null;
   setEditCatUI();
 };
 window.pickEditSub = function(sub, btn) {
@@ -1447,7 +1476,8 @@ window.pickEditSub = function(sub, btn) {
 function stripBaseFromTitle(rawText) {
   let t = displayHistoryText({ text: rawText });
   t = t.replace(/\s*（手动）\s*$/, '');
-  const bases = ['运动·跳操拉伸', '运动·练背', '运动', '英语', '练习'];
+  const bases = ['英语·复习单词', '英语·背新单词', '英语·习题', '英语·听力',
+    '运动·跳操拉伸', '运动·练背', '运动', '英语', '练习'];
   for (const b of bases) {
     if (t.startsWith(b)) { t = t.slice(b.length); break; }
   }
@@ -1491,10 +1521,11 @@ window.saveEditRecord = function() {
   if (module) {
     cat = module.id;
     let base = module.text;
-    if (module.id === 'skill') {
-      if (!editSubVal) { resultEl.innerHTML = '<div class="sync-result error">请选择 练背 或 跳操拉伸</div>'; return; }
+    const subList = subtypesFor(module.id);
+    if (subList) {
+      if (!editSubVal) { resultEl.innerHTML = '<div class="sync-result error">请选择：' + subList.join(' / ') + '</div>'; return; }
       sub = editSubVal;
-      base = '运动·' + editSubVal;
+      base = module.text + '·' + editSubVal;
     }
     text = base + (remark ? '（' + remark + '）' : '') + manualSuffix;
   } else {
