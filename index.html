@@ -360,8 +360,10 @@
       <div class="card-title">💾 存储与备份</div>
       <div class="rate-bar-label"><span>本机记录</span><span id="storageText">0 / 10000 条</span></div>
       <div class="rate-bar"><div class="rate-bar-fill" id="storageFill" style="width:0%"></div></div>
-      <div class="sync-hint" style="margin-top:10px">数据会自动同步到你的私有云端备份；也可以导出文件存到手机/电脑里作为离线备份。</div>
+      <div class="sync-hint" style="margin-top:10px">数据会自动同步到你的私有云端备份；导出的文件可以存到手机/电脑，需要时用下面的“从文件恢复”导回来。</div>
       <button class="manual-checkin-btn" onclick="exportDataFile()">⬇️ 导出数据文件（备份）</button>
+      <button class="manual-checkin-btn" style="margin-top:8px;background:linear-gradient(135deg,#8e9bff,#667eea)" onclick="document.getElementById('importFileInput').click()">📥 从文件恢复</button>
+      <input type="file" id="importFileInput" accept=".json,application/json" style="display:none" onchange="importDataFile(this.files[0])">
     </div>
   </div>
 
@@ -468,7 +470,7 @@
   <!-- 存储提醒弹窗 -->
   <div class="modal-overlay" id="storageWarnModal">
     <div class="modal">
-      <div class="modal-title">💾 存储提醒</div>
+      <div class="modal-title">💾 数据提示</div>
       <div class="modal-sub" id="storageWarnText"></div>
       <div class="modal-btns">
         <button class="btn-confirm" onclick="closeStorageWarn()">知道了</button>
@@ -1364,6 +1366,55 @@ function exportDataFile() {
   }
 }
 window.exportDataFile = exportDataFile;
+
+function refreshAllViews() {
+  checkDailyReset();
+  updateTimerDisplay();
+  updateTimerTaskLabel();
+  renderTasks();
+  renderDailyModules();
+  renderCalendarPage();
+  renderDayRecords(selectedCalendarDate || getLocalDateStr());
+  updateStats();
+}
+
+function importDataFile(file) {
+  const input = document.getElementById('importFileInput');
+  if (!file) { if (input) input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed = null;
+    try { parsed = JSON.parse(String(reader.result)); } catch (e) { parsed = null; }
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.history)) {
+      showStorageWarn('导入失败：这个文件不是有效的备份文件。');
+      if (input) input.value = '';
+      return;
+    }
+    if (!window.confirm('确定用文件里的数据恢复吗？会替换本机当前数据（随后自动同步到云端）。')) {
+      if (input) input.value = '';
+      return;
+    }
+    const data = {
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+      dailyFixed: parsed.dailyFixed && typeof parsed.dailyFixed === 'object' ? parsed.dailyFixed : {},
+      checkins: parsed.checkins && typeof parsed.checkins === 'object' ? parsed.checkins : {},
+      history: parsed.history,
+      dailyFixedDate: parsed.dailyFixedDate || getLocalDateStr()
+    };
+    markDataUpdated(data);
+    saveData(data);
+    refreshAllViews();
+    scheduleAutoSync();
+    showStorageWarn('✅ 已从文件恢复 ' + data.history.length + ' 条记录，并已安排同步到云端。');
+    if (input) input.value = '';
+  };
+  reader.onerror = () => {
+    showStorageWarn('读取文件失败，请重试。');
+    if (input) input.value = '';
+  };
+  reader.readAsText(file);
+}
+window.importDataFile = importDataFile;
 
 // ===== 手动补记 =====
 function dateOffsetStr(offsetDays) {
