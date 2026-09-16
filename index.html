@@ -356,6 +356,13 @@
         <div class="task-history-list" id="taskHistoryList"></div>
       </div>
     </div>
+    <div class="card">
+      <div class="card-title">💾 存储与备份</div>
+      <div class="rate-bar-label"><span>本机记录</span><span id="storageText">0 / 10000 条</span></div>
+      <div class="rate-bar"><div class="rate-bar-fill" id="storageFill" style="width:0%"></div></div>
+      <div class="sync-hint" style="margin-top:10px">数据会自动同步到你的私有云端备份；也可以导出文件存到手机/电脑里作为离线备份。</div>
+      <button class="manual-checkin-btn" onclick="exportDataFile()">⬇️ 导出数据文件（备份）</button>
+    </div>
   </div>
 
   <!-- 底部导航 -->
@@ -458,6 +465,17 @@
     </div>
   </div>
 
+  <!-- 存储提醒弹窗 -->
+  <div class="modal-overlay" id="storageWarnModal">
+    <div class="modal">
+      <div class="modal-title">💾 存储提醒</div>
+      <div class="modal-sub" id="storageWarnText"></div>
+      <div class="modal-btns">
+        <button class="btn-confirm" onclick="closeStorageWarn()">知道了</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 // ===== 常量 =====
 const DAILY_FIXED = [
@@ -466,6 +484,7 @@ const DAILY_FIXED = [
   { id: 'skill', text: '运动', minutes: 30, icon: '🏃' }
 ];
 const DATA_KEY = 'focus_clock_data_v5';
+const HISTORY_CAP = 10000; // 本机最多保留的历史记录条数
 
 // 获取本地日期字符串（支持时间戳）
 function getLocalDateStr(ts) {
@@ -529,8 +548,26 @@ function loadData() {
   }
   return data;
 }
-function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
+function saveData(data) {
+  try {
+    localStorage.setItem(DATA_KEY, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    showStorageWarn('本机存储空间不足，最新数据可能没保存成功。请先导出数据文件，并检查云端同步。');
+    return false;
+  }
+}
 function markDataUpdated(data) { data.updatedAt = Date.now(); }
+
+function trimHistory(data) {
+  if (!Array.isArray(data.history)) return data;
+  if (data.history.length > HISTORY_CAP) {
+    const removed = data.history.length - HISTORY_CAP;
+    data.history = data.history.slice(0, HISTORY_CAP);
+    data.trimNotice = { removed, at: Date.now() };
+  }
+  return data;
+}
 
 // 零点重置每日固定项目
 function checkDailyReset() {
@@ -820,7 +857,7 @@ function finishAndSave(minutes, note) {
   let historyText = taskText || '专注' + minutes + '分钟';
   if (note) historyText = historyText + ' → ' + note;
   data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now(), cat: completionCat, sub: completionSub });
-  if (data.history.length > 10000) data.history = data.history.slice(0, 10000);
+  trimHistory(data);
   markDataUpdated(data);
   saveData(data);
   scheduleAutoSync();
@@ -1174,6 +1211,8 @@ function updateStats() {
   document.getElementById('dailyRateFill').style.width = dailyRate + '%';
   renderInsights(data);
   renderCategoryStats(data);
+  renderStorageInfo(data);
+  maybeWarnStorage(data);
   renderTaskHistory();
 }
 
@@ -1269,6 +1308,62 @@ function dismissSyncRemind() {
   localStorage.setItem('nengixing_remind_date', getLocalDateStr());
   document.getElementById('syncRemindModal').classList.remove('show');
 }
+
+// ===== 存储容量提醒与导出 =====
+function showStorageWarn(text) {
+  const el = document.getElementById('storageWarnText');
+  if (el) el.textContent = text;
+  const modal = document.getElementById('storageWarnModal');
+  if (modal) modal.classList.add('show');
+}
+function closeStorageWarn() {
+  const modal = document.getElementById('storageWarnModal');
+  if (modal) modal.classList.remove('show');
+  localStorage.setItem('nengixing_storage_warn_date', getLocalDateStr());
+}
+function renderStorageInfo(data) {
+  const count = (data.history || []).length;
+  const ratio = Math.min(1, count / HISTORY_CAP);
+  setTextIfExists('storageText', count + ' / ' + HISTORY_CAP + ' 条');
+  const fill = document.getElementById('storageFill');
+  if (fill) {
+    fill.style.width = Math.round(ratio * 100) + '%';
+    fill.style.background = ratio >= 0.9 ? 'linear-gradient(90deg,#ff8a65,#ff5252)' : 'linear-gradient(90deg,#667eea,#764ba2)';
+  }
+}
+function maybeWarnStorage(data) {
+  const today = getLocalDateStr();
+  if (data.trimNotice && data.trimNotice.removed) {
+    const removed = data.trimNotice.removed;
+    delete data.trimNotice;
+    markDataUpdated(data);
+    saveData(data);
+    showStorageWarn('本机记录已达上限，最旧的 ' + removed + ' 条已移出本机。建议导出一份数据文件备份；需要更高上限也可以告诉我。');
+    return;
+  }
+  const count = (data.history || []).length;
+  if (count >= HISTORY_CAP * 0.9 && localStorage.getItem('nengixing_storage_warn_date') !== today) {
+    localStorage.setItem('nengixing_storage_warn_date', today);
+    showStorageWarn('本机记录已有 ' + count + ' / ' + HISTORY_CAP + ' 条，接近上限。建议点“导出数据文件”做一次离线备份。');
+  }
+}
+function exportDataFile() {
+  try {
+    const data = loadData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '你能行-打卡备份-' + getLocalDateStr() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  } catch (e) {
+    showStorageWarn('导出失败，请稍后重试；数据本身不会受影响。');
+  }
+}
+window.exportDataFile = exportDataFile;
 
 // ===== 手动补记 =====
 function dateOffsetStr(offsetDays) {
@@ -1375,7 +1470,7 @@ window.saveManualCheckin = function() {
   const duplicated = data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
   data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat, sub });
-  if (data.history.length > 10000) data.history = data.history.slice(0, 10000);
+  trimHistory(data);
   data.checkins[dateStr] = true;
   if (dateStr === getLocalDateStr()) recalcDailyFromTodayHistory(data);
   markDataUpdated(data);
@@ -1721,7 +1816,7 @@ function mergeHistory(localHistory, remoteHistory) {
     });
   });
   out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  return out.slice(0, 10000);
+  return out.slice(0, HISTORY_CAP);
 }
 
 function mergeCloudData(local, remote) {
