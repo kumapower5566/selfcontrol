@@ -128,10 +128,15 @@
     .calendar-day.checked { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; }
     .calendar-day.checked::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(102,126,234,0.35); }
     .calendar-day.selected { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #667eea; }
+    .calendar-day.med::before { content: ''; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #4caf50; box-shadow: 0 0 0 2px #fff; }
     .calendar-day.empty { cursor: default; }
     .calendar-day.future { color: #ccc; cursor: not-allowed; }
     .calendar-day-hint { text-align: center; font-size: 0.78rem; color: #999; margin-top: 12px; min-height: 18px; }
     .calendar-day-hint.on { color: #2e7d32; font-weight: 600; }
+    .calendar-legend { display: flex; justify-content: center; gap: 16px; font-size: 0.72rem; color: #999; margin-top: 8px; }
+    .calendar-legend span { display: flex; align-items: center; gap: 4px; }
+    .calendar-legend .legend-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: #4caf50; }
+    .calendar-legend .legend-check { display: block; width: 8px; height: 8px; border-radius: 50%; background: #667eea; }
     .manual-checkin-btn { width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
     .manual-checkin-btn:active { transform: scale(0.97); }
     .manual-cat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
@@ -316,6 +321,10 @@
       </div>
       <div class="calendar-grid" id="calendarGrid2"></div>
       <div class="calendar-day-hint" id="calendarDayHint"></div>
+      <div class="calendar-legend">
+        <span><i class="legend-check"></i>打卡日</span>
+        <span><i class="legend-dot"></i>吃药日</span>
+      </div>
       <button class="manual-checkin-btn" id="manualCheckinBtn" onclick="openManualCheckin()">＋ 忘记计时？手动补记</button>
     </div>
     <div class="card">
@@ -1076,6 +1085,8 @@ function renderCalendarPage() {
   const today = new Date();
   const todayStr = getLocalDateStr();
   const data = loadData();
+  const medDates = {};
+  (data.history || []).forEach(h => { if (classifyRecordKey(h) === 'med') medDates[h.date] = true; });
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   document.getElementById('calendarMonth2').textContent = `${year}年 ${month + 1}月`;
@@ -1090,11 +1101,13 @@ function renderCalendarPage() {
     let cls = 'calendar-day';
     if (isToday) cls += ' today';
     if (isChecked) cls += ' checked';
+    const isMed = !!medDates[dateStr];
+    if (isMed) cls += ' med';
     if (isFuture) cls += ' future';
     if (dateStr === selectedCalendarDate) cls += ' selected';
     // 非未来的日期可点击查看当天记录
     const clickAttr = isFuture ? '' : ` onclick="selectCalendarDate('${dateStr}')"`;
-    html += `<div class="${cls}"${clickAttr}>${d}</div>`;
+    html += `<div class="${cls}"${clickAttr}${isMed ? ' title="吃药日"' : ''}>${d}</div>`;
   }
   document.getElementById('calendarGrid2').innerHTML = html;
 }
