@@ -48,7 +48,7 @@
     .task-card-compact .task-delete { font-size: 1.1rem; padding: 2px 4px; }
     .daily-fixed-compact { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); border-radius: 18px; padding: 12px; margin-bottom: 10px; border: 2px solid rgba(102,126,234,0.15); display: block !important; visibility: visible !important; }
     .daily-fixed-compact .daily-fixed-title { font-size: 0.75rem; margin-bottom: 8px; }
-    .daily-fixed-compact .daily-modules { gap: 6px; display: grid !important; grid-template-columns: repeat(3, 1fr) !important; }
+    .daily-fixed-compact .daily-modules { gap: 6px; display: grid !important; grid-template-columns: repeat(4, 1fr) !important; }
     .daily-fixed-compact .daily-module { padding: 8px 4px; border-radius: 12px; display: block !important; visibility: visible !important; }
     .daily-fixed-compact .daily-module-icon { font-size: 1.3rem; margin-bottom: 2px; display: block; }
     .daily-fixed-compact .daily-module-text { font-size: 0.72rem; margin-bottom: 3px; display: block; }
@@ -134,7 +134,7 @@
     .calendar-day-hint.on { color: #2e7d32; font-weight: 600; }
     .manual-checkin-btn { width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
     .manual-checkin-btn:active { transform: scale(0.97); }
-    .manual-cat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .manual-cat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
     .manual-cat { padding: 9px 2px; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.78rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .manual-cat:active { transform: scale(0.95); }
     .manual-cat.active { border-color: #667eea; background: #f0f2ff; color: #667eea; font-weight: 600; }
@@ -268,7 +268,7 @@
     <div class="daily-fixed-compact" id="dailyFixed">
       <div class="daily-fixed-title">
         <span>🎯 每日必做</span>
-        <span class="progress" id="dailyFixedProgress">0/3</span>
+        <span class="progress" id="dailyFixedProgress">0/4</span>
       </div>
       <div class="daily-modules" id="dailyModules">
         <div class="daily-module" onclick="selectDailyModule('word')">
@@ -284,6 +284,11 @@
         <div class="daily-module" onclick="selectDailyModule('skill')">
           <div class="daily-module-icon">🏃</div>
           <div class="daily-module-text">运动</div>
+          <div class="daily-module-time">打卡 0 次</div>
+        </div>
+        <div class="daily-module" onclick="selectDailyModule('med')">
+          <div class="daily-module-icon">💊</div>
+          <div class="daily-module-text">吃药</div>
           <div class="daily-module-time">打卡 0 次</div>
         </div>
       </div>
@@ -348,7 +353,7 @@
     <div class="card">
       <div class="card-title">📊 基础任务完成率</div>
       <div class="rate-bar-wrap">
-        <div class="rate-bar-label"><span>每日必做</span><span id="dailyRateText">0/3</span></div>
+        <div class="rate-bar-label"><span>每日必做</span><span id="dailyRateText">0/4</span></div>
         <div class="rate-bar"><div class="rate-bar-fill" id="dailyRateFill" style="width:0%"></div></div>
       </div>
       <div class="task-history">
@@ -411,6 +416,7 @@
         <button type="button" class="manual-cat" data-val="英语" onclick="pickManualCat('英语', this)">📖 英语</button>
         <button type="button" class="manual-cat" data-val="练习" onclick="pickManualCat('练习', this)">✏️ 练习</button>
         <button type="button" class="manual-cat" data-val="运动" onclick="pickManualCat('运动', this)">🏃 运动</button>
+        <button type="button" class="manual-cat" data-val="吃药" onclick="pickManualCat('吃药', this)">💊 吃药</button>
         <button type="button" class="manual-cat" data-val="" onclick="pickManualCat('', this)">其他</button>
       </div>
       <div class="manual-sub-row" id="manualSubRow" style="display:none"></div>
@@ -439,6 +445,7 @@
         <button type="button" class="manual-cat" data-val="英语" onclick="pickEditCat('英语', this)">📖 英语</button>
         <button type="button" class="manual-cat" data-val="练习" onclick="pickEditCat('练习', this)">✏️ 练习</button>
         <button type="button" class="manual-cat" data-val="运动" onclick="pickEditCat('运动', this)">🏃 运动</button>
+        <button type="button" class="manual-cat" data-val="吃药" onclick="pickEditCat('吃药', this)">💊 吃药</button>
         <button type="button" class="manual-cat" data-val="" onclick="pickEditCat('', this)">其他</button>
       </div>
       <div class="manual-sub-row" id="editSubRow" style="display:none"></div>
@@ -483,7 +490,8 @@
 const DAILY_FIXED = [
   { id: 'word', text: '英语', minutes: 30, icon: '📖' },
   { id: 'exercise', text: '练习', minutes: 30, icon: '✏️' },
-  { id: 'skill', text: '运动', minutes: 30, icon: '🏃' }
+  { id: 'skill', text: '运动', minutes: 30, icon: '🏃' },
+  { id: 'med', text: '吃药', icon: '💊' }
 ];
 const DATA_KEY = 'focus_clock_data_v5';
 const HISTORY_CAP = 10000; // 本机最多保留的历史记录条数
@@ -897,7 +905,7 @@ function renderDailyModules() {
     checkDailyReset();
     const data = loadData();
     const done = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
-    document.getElementById('dailyFixedProgress').textContent = done + '/3';
+    document.getElementById('dailyFixedProgress').textContent = done + '/' + DAILY_FIXED.length;
     const container = document.getElementById('dailyModules');
     if (!container) { console.error('dailyModules not found!'); return; }
     // 更新状态，不重新生成 HTML
@@ -924,8 +932,25 @@ function renderDailyModules() {
   } catch(e) { console.error('renderDailyModules error:', e); }
 }
 
+function checkInMedication() {
+  const data = loadData();
+  const today = getLocalDateStr();
+  data.history.unshift({ text: '吃药', time: 0, date: today, ts: Date.now(), cat: 'med' });
+  trimHistory(data);
+  data.checkins[today] = true;
+  recalcDailyFromTodayHistory(data);
+  markDataUpdated(data);
+  saveData(data);
+  scheduleAutoSync();
+  updateStats();
+  renderDailyModules();
+  renderCalendarPage();
+  renderDayRecords(selectedCalendarDate || today);
+}
+
 window.selectDailyModule = function(id) {
   const data = loadData();
+  if (id === 'med') { checkInMedication(); return; }
   // 正在计时/已暂停时切换：停止本次计时（不记录）
   clearInterval(timerInterval);
   timerInterval = null;
@@ -1146,6 +1171,7 @@ function classifyRecordKey(h) {
     return 'word_vocab';
   }
   if (h.cat === 'exercise') return 'exercise';
+  if (h.cat === 'med') return 'med';
   if (h.cat === 'skill') return h.sub === '跳操拉伸' ? 'skill_cardio' : 'skill_back';
   if (h.cat === 'other') return 'other';
   // 旧记录没有 cat 字段，按文字判断
@@ -1157,6 +1183,7 @@ function classifyRecordKey(h) {
   if (t.startsWith('运动')) return 'skill_generic';
   if (t.startsWith('英语')) return 'word_vocab';
   if (t.startsWith('练习')) return 'exercise';
+  if (t.startsWith('吃药')) return 'med';
   return 'other';
 }
 
@@ -1165,12 +1192,13 @@ const CATEGORY_META = [
   { key: 'word_exam', icon: '📝', name: '英语习题' },
   { key: 'word_listen', icon: '🎧', name: '听力' },
   { key: 'exercise', icon: '✏️', name: '练习' },
+  { key: 'med', icon: '💊', name: '吃药' },
   { key: 'skill_back', icon: '💪', name: '练背' },
   { key: 'skill_cardio', icon: '🤸', name: '跳操 / 拉伸' },
   { key: 'skill_generic', icon: '🏃', name: '运动（未分子类）' },
   { key: 'other', icon: '📌', name: '其他' }
 ];
-const ALWAYS_SHOW_CATS = ['word_vocab', 'word_exam', 'word_listen', 'exercise', 'skill_back', 'skill_cardio'];
+const ALWAYS_SHOW_CATS = ['word_vocab', 'word_exam', 'word_listen', 'exercise', 'med', 'skill_back', 'skill_cardio'];
 
 function renderCategoryStats(data) {
   const el = document.getElementById('catStats');
@@ -1203,13 +1231,13 @@ function updateStats() {
   const dailyDone = DAILY_FIXED.filter(f => data.dailyFixed[f.id]).length;
   const total = completedCustomToday + dailyDone;
   // 今日目标 = 3 项每日必做 + 未完成/今日完成的自定义任务
-  const planned = 3 + pendingCustom + completedCustomToday;
+  const planned = DAILY_FIXED.length + pendingCustom + completedCustomToday;
   const rate = planned > 0 ? Math.round((total / planned) * 100) : 0;
   document.getElementById('totalFocus').textContent = total;
   document.getElementById('checkInDays').textContent = Object.values(data.checkins).filter(Boolean).length;
   document.getElementById('taskRate').textContent = rate + '%';
-  const dailyRate = Math.round((dailyDone / 3) * 100);
-  document.getElementById('dailyRateText').textContent = dailyDone + '/3';
+  const dailyRate = Math.round((dailyDone / DAILY_FIXED.length) * 100);
+  document.getElementById('dailyRateText').textContent = dailyDone + '/' + DAILY_FIXED.length;
   document.getElementById('dailyRateFill').style.width = dailyRate + '%';
   renderInsights(data);
   renderCategoryStats(data);
@@ -1228,7 +1256,7 @@ function renderTaskHistory() {
     return;
   }
   el.innerHTML = data.history.map((h, idx) => h.date !== today ? '' :
-    `<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${h.time}分钟</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
+    `<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
   ).join('');
 }
 function renderDayRecords(dateStr) {
@@ -1259,7 +1287,7 @@ function renderDayRecords(dateStr) {
   const rows = [];
   data.history.forEach((h, idx) => {
     if (h.date !== dateStr) return;
-    rows.push(`<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${h.time}分钟</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
+    rows.push(`<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
   });
   if (rows.length > 0) {
     el.innerHTML = rows.join('');
@@ -1436,6 +1464,7 @@ function openManualCheckin() {
   document.getElementById('manualDayTodayBtn').classList.add('active');
   document.getElementById('manualDayYestBtn').classList.remove('active');
   document.getElementById('manualMinutes').value = '30';
+  document.getElementById('manualMinutes').style.display = '';
   document.getElementById('manualResult').innerHTML = '';
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
   cats.forEach(c => c.classList.remove('active'));
@@ -1461,6 +1490,14 @@ window.pickManualCat = function(text, btn) {
   nameEl.style.display = '';
   const module = DAILY_FIXED.find(f => f.text === text);
   const subList = module ? subtypesFor(module.id) : null;
+  const minutesEl = document.getElementById('manualMinutes');
+  if (module && module.id === 'med') {
+    minutesEl.value = '0';
+    minutesEl.style.display = 'none';
+  } else {
+    minutesEl.style.display = '';
+    if (!Number(minutesEl.value)) minutesEl.value = '30';
+  }
   const subRow = document.getElementById('manualSubRow');
   if (subList) {
     subRow.style.display = 'grid';
@@ -1496,8 +1533,9 @@ window.saveManualCheckin = function() {
   const resultEl = document.getElementById('manualResult');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
   if (dateStr < dateOffsetStr(-1) || dateStr > getLocalDateStr()) { resultEl.innerHTML = '<div class="sync-result error">只能补记今天或昨天</div>'; return; }
-  if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
-  const minutes = Math.min(600, minutesRaw);
+  const isMed = module && module.id === 'med';
+  if (!isMed && (isNaN(minutesRaw) || minutesRaw < 1)) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
+  const minutes = isMed ? 0 : Math.min(600, minutesRaw);
   const data = loadData();
   let historyText, cat, sub = null;
   if (module) {
@@ -1544,6 +1582,11 @@ let editSubVal = null;
 function displayHistoryText(h) {
   // 老记录会在名称后带 (N分钟)，展示时去掉，避免和右侧时长重复
   return String(h.text || '').replace(/\s*\(\s*\d+\s*分钟\s*\)\s*$/, '');
+}
+
+function formatHistoryTime(h) {
+  const n = Number(h.time) || 0;
+  return n > 0 ? n + '分钟' : '✓';
 }
 
 function historyMatchesModule(title, moduleText) {
@@ -1594,6 +1637,7 @@ function inferEditCategory(h) {
   if (key === 'word_exam') return { cat: '英语', sub: '习题' };
   if (key === 'word_listen') return { cat: '英语', sub: '听力' };
   if (key === 'exercise') return { cat: '练习', sub: null };
+  if (key === 'med') return { cat: '吃药', sub: null };
   if (key === 'skill_back') return { cat: '运动', sub: '练背' };
   if (key === 'skill_cardio') return { cat: '运动', sub: '跳操拉伸' };
   if (key === 'skill_generic') return { cat: '运动', sub: null };
@@ -1610,6 +1654,16 @@ function setEditCatUI() {
   } else {
     row.style.display = 'none';
     row.innerHTML = '';
+  }
+  const minutesEl = document.getElementById('recordEditMinutes');
+  if (minutesEl) {
+    if (module && module.id === 'med') {
+      minutesEl.value = '0';
+      minutesEl.style.display = 'none';
+    } else {
+      minutesEl.style.display = '';
+      if (!Number(minutesEl.value)) minutesEl.value = '30';
+    }
   }
 }
 window.pickEditCat = function(text, btn) {
@@ -1663,9 +1717,10 @@ window.saveEditRecord = function() {
   const minutesRaw = parseInt(document.getElementById('recordEditMinutes').value, 10);
   const resultEl = document.getElementById('recordEditResult');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
-  if (isNaN(minutesRaw) || minutesRaw < 1) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
-  const minutes = Math.min(600, minutesRaw);
   const module = DAILY_FIXED.find(f => f.text === editCatVal);
+  const isMed = module && module.id === 'med';
+  if (!isMed && (isNaN(minutesRaw) || minutesRaw < 1)) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
+  const minutes = isMed ? 0 : Math.min(600, minutesRaw);
   let text, cat, sub = null;
   const manualSuffix = editingOriginalManual ? '（手动）' : '';
   if (module) {
