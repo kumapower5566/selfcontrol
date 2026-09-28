@@ -225,6 +225,9 @@
     .sync-result { font-size: 0.85rem; text-align: center; margin-top: 10px; padding: 10px; border-radius: 12px; }
     .sync-result.success { background: #e8f5e9; color: #2e7d32; }
     .sync-result.error { background: #ffebee; color: #c62828; }
+    .undo-toast { display: none; position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: rgba(40,40,50,0.94); color: #fff; padding: 12px 18px; border-radius: 14px; align-items: center; gap: 14px; z-index: 3000; font-size: 0.88rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25); max-width: 90vw; }
+    .undo-toast.show { display: flex; }
+    .undo-toast button { border: none; background: none; color: #a5b0ff; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: inherit; padding: 0; }
     .empty-state { text-align: center; padding: 20px; color: #bbb; font-size: 0.9rem; }
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: rgba(255,255,255,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.06); display: flex; align-items: stretch; z-index: 999; padding-bottom: env(safe-area-inset-bottom); }
     .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; gap: 4px; border: none; background: none; padding: 8px 0 0; font-family: inherit; position: relative; }
@@ -492,6 +495,12 @@
         <button class="btn-confirm" onclick="closeStorageWarn()">知道了</button>
       </div>
     </div>
+  </div>
+
+  <!-- 删除撤销提示 -->
+  <div class="undo-toast" id="undoToast">
+    <span>已删除 1 条记录</span>
+    <button onclick="undoDelete()">撤销</button>
   </div>
 
 <script>
@@ -1572,7 +1581,8 @@ window.saveManualCheckin = function() {
     if (!name) { resultEl.innerHTML = '<div class="sync-result error">选了“其他”需要填写项目名称</div>'; return; }
     historyText = name + '（手动）';
   }
-  const duplicated = data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
+  // 吃药一天可能吃多次，不做重复拦截
+  const duplicated = cat !== 'med' && data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
   data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat, sub });
   trimHistory(data);
@@ -1594,6 +1604,8 @@ let editingHistoryIndex = -1;
 let editingOriginalManual = false;
 let editCatVal = '';
 let editSubVal = null;
+let lastDeleted = null;
+let undoToastTimer = null;
 
 function displayHistoryText(h) {
   // 老记录会在名称后带 (N分钟)，展示时去掉，避免和右侧时长重复
@@ -1717,6 +1729,7 @@ window.editHistoryItem = function(idx) {
   editingOriginalManual = /（手动）$/.test(String(h.text || ''));
   document.getElementById('recordEditName').value = stripBaseFromTitle(h.text);
   document.getElementById('recordEditDate').value = h.date || getLocalDateStr();
+  document.getElementById('recordEditDate').max = getLocalDateStr();
   document.getElementById('recordEditMinutes').value = h.time || 30;
   document.getElementById('recordEditResult').innerHTML = '';
   setEditCatUI();
@@ -1735,6 +1748,7 @@ window.saveEditRecord = function() {
   const minutesRaw = parseInt(document.getElementById('recordEditMinutes').value, 10);
   const resultEl = document.getElementById('recordEditResult');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { resultEl.innerHTML = '<div class="sync-result error">请选择日期</div>'; return; }
+  if (dateStr > getLocalDateStr()) { resultEl.innerHTML = '<div class="sync-result error">不能改到未来的日期</div>'; return; }
   const module = DAILY_FIXED.find(f => f.text === editCatVal);
   const isMed = module && module.id === 'med';
   if (!isMed && (isNaN(minutesRaw) || minutesRaw < 1)) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
@@ -1778,6 +1792,7 @@ window.deleteHistoryItem = function(idx) {
   const h = data.history[idx];
   if (!h) return;
   if (!window.confirm('确定删除这条打卡记录吗？')) return;
+  const removedRecord = { ...h };
   data.history.splice(idx, 1);
   recalcDailyFromTodayHistory(data);
   cleanupCheckinForDate(data, h.date);
@@ -1788,6 +1803,35 @@ window.deleteHistoryItem = function(idx) {
   renderDailyModules();
   renderCalendarPage();
   renderDayRecords(selectedCalendarDate || h.date);
+  lastDeleted = { record: removedRecord, idx };
+  showUndoToast();
+};
+
+function showUndoToast() {
+  const toast = document.getElementById('undoToast');
+  if (!toast) return;
+  toast.classList.add('show');
+  if (undoToastTimer) clearTimeout(undoToastTimer);
+  undoToastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    lastDeleted = null;
+  }, 8000);
+}
+window.undoDelete = function() {
+  if (!lastDeleted) return;
+  const data = loadData();
+  const at = Math.min(Math.max(0, lastDeleted.idx), data.history.length);
+  data.history.splice(at, 0, lastDeleted.record);
+  if (lastDeleted.record.date) data.checkins[lastDeleted.record.date] = true;
+  recalcDailyFromTodayHistory(data);
+  markDataUpdated(data);
+  saveData(data);
+  scheduleAutoSync();
+  refreshAllViews();
+  const toast = document.getElementById('undoToast');
+  if (toast) toast.classList.remove('show');
+  if (undoToastTimer) clearTimeout(undoToastTimer);
+  lastDeleted = null;
 };
 
 // ===== 同步 =====
@@ -1847,8 +1891,20 @@ async function ghJson(path, token, options = {}) {
 async function readGistContent(token, gistId) {
   if (!gistId) return null;
   const gist = await ghJson('/gists/' + gistId, token, { allow404: true });
-  if (!gist || !gist.files || !gist.files[GIST_FILE] || !gist.files[GIST_FILE].content) return null;
-  try { return JSON.parse(gist.files[GIST_FILE].content); }
+  if (!gist || !gist.files || !gist.files[GIST_FILE]) return null;
+  const file = gist.files[GIST_FILE];
+  let content = file.content;
+  // GitHub 通过 API 读取时最多给 1MB，超出会被截断；此时用 raw 地址取完整内容
+  if (file.truncated && file.raw_url) {
+    try {
+      const res = await fetch(file.raw_url, {
+        headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3.raw' }
+      });
+      if (res.ok) content = await res.text();
+    } catch (e) { /* 取不到就退回原内容 */ }
+  }
+  if (!content) return null;
+  try { return JSON.parse(content); }
   catch(e) { return null; }
 }
 
@@ -1863,6 +1919,12 @@ async function findBackupGist(token) {
 
 async function writeGist(token, gistId, data) {
   const payload = JSON.stringify(data);
+  let bytes = 0;
+  try { bytes = new TextEncoder().encode(payload).length; } catch (e) { bytes = payload.length; }
+  if (bytes > 800 * 1024 && localStorage.getItem('nengixing_big_warn_date') !== getLocalDateStr()) {
+    localStorage.setItem('nengixing_big_warn_date', getLocalDateStr());
+    showStorageWarn('云端备份已约 ' + Math.round(bytes / 1024) + ' KB，接近 1MB 的读取上限。建议点“导出数据文件”备份一次；旧记录也可让我帮你按年份归档。');
+  }
   if (gistId) {
     try {
       await ghJson('/gists/' + gistId, token, {
@@ -1996,6 +2058,7 @@ async function syncWithCloud() {
       const restored = { ...remote };
       restored.updatedAt = Date.now();
       saveData(restored);
+      refreshAllViews();
       gistId = await writeGist(token, gistId, restored);
       return { ok: true, changed: true, restored: true };
     }
@@ -2015,6 +2078,7 @@ async function syncWithCloud() {
       const adopted = { ...remote };
       adopted.updatedAt = Date.now();
       saveData(adopted);
+      refreshAllViews();
       gistId = await writeGist(token, gistId, adopted);
       return { ok: true, changed: true, restored: true };
     }
