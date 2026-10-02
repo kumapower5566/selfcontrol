@@ -282,22 +282,22 @@
         <div class="daily-module" onclick="selectDailyModule('word')">
           <div class="daily-module-icon">📖</div>
           <div class="daily-module-text">英语</div>
-          <div class="daily-module-time">打卡 0 次</div>
+          <div class="daily-module-time">今天未完成</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('exercise')">
           <div class="daily-module-icon">✏️</div>
           <div class="daily-module-text">练习</div>
-          <div class="daily-module-time">打卡 0 次</div>
+          <div class="daily-module-time">今天未完成</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('skill')">
           <div class="daily-module-icon">🏃</div>
           <div class="daily-module-text">运动</div>
-          <div class="daily-module-time">打卡 0 次</div>
+          <div class="daily-module-time">今天未完成</div>
         </div>
         <div class="daily-module" onclick="selectDailyModule('med')">
           <div class="daily-module-icon">💊</div>
           <div class="daily-module-text">吃药</div>
-          <div class="daily-module-time">打卡 0 次</div>
+          <div class="daily-module-time">今天 0 次</div>
         </div>
       </div>
     </div>
@@ -938,9 +938,15 @@ function renderDailyModules() {
       if (!f) return;
       const timeEl = mod.querySelector('.daily-module-time');
       if (timeEl) {
-        const today = getLocalDateStr();
-        const count = (data.history || []).filter(h => h.date === today && historyBelongsToModule(h, f)).length;
-        timeEl.textContent = '打卡 ' + count + ' 次';
+        if (f.id === 'med') {
+          // 吃药按次数显示（早/晚可能各一次）
+          const today = getLocalDateStr();
+          const count = (data.history || []).filter(h => h.date === today && historyBelongsToModule(h, f)).length;
+          timeEl.textContent = '今天 ' + count + ' 次';
+        } else {
+          // 学习项按天：做一次或多次都只表示“今天已完成”
+          timeEl.textContent = data.dailyFixed[f.id] ? '✓ 今天已完成' : '今天未完成';
+        }
       }
       const isDone = !!data.dailyFixed[id];
       const isSelected = currentDailyId === id;
@@ -1235,19 +1241,25 @@ function renderCategoryStats(data) {
   const agg = {};
   (data.history || []).forEach(h => {
     const key = classifyRecordKey(h);
-    if (!agg[key]) agg[key] = { count: 0, minutes: 0, todayMinutes: 0 };
-    agg[key].count++;
+    if (!agg[key]) agg[key] = { days: new Set(), minutes: 0, todayMinutes: 0, todayCount: 0 };
+    if (h.date) agg[key].days.add(h.date);
     agg[key].minutes += Number(h.time) || 0;
-    if (h.date === today) agg[key].todayMinutes += Number(h.time) || 0;
+    if (h.date === today) {
+      agg[key].todayMinutes += Number(h.time) || 0;
+      agg[key].todayCount++;
+    }
   });
   el.innerHTML = CATEGORY_META.filter(m => {
     if (ALWAYS_SHOW_CATS.includes(m.key)) return true;
-    return agg[m.key] && agg[m.key].count > 0;
+    return agg[m.key];
   }).map(m => {
-    const a = agg[m.key] || { count: 0, minutes: 0, todayMinutes: 0 };
+    const a = agg[m.key] || { days: new Set(), minutes: 0, todayMinutes: 0, todayCount: 0 };
+    const dayCount = a.days.size;
+    const todayText = a.minutes > 0 ? `今日 ${a.todayMinutes} 分` : `今日 ${a.todayCount} 次`;
+    const totalText = a.minutes > 0 ? `累计 ${dayCount} 天 · 共 ${a.minutes} 分钟` : `累计 ${dayCount} 天`;
     return `<div class="cat-row"><span class="cat-icon">${m.icon}</span><span class="cat-name">${m.name}</span>` +
-      `<span class="cat-right"><span class="cat-today${a.todayMinutes ? '' : ' none'}">今日 ${a.todayMinutes} 分</span>` +
-      `<span class="cat-total">累计 ${a.count} 次 · ${a.minutes} 分钟</span></span></div>`;
+      `<span class="cat-right"><span class="cat-today${a.todayCount ? '' : ' none'}">${todayText}</span>` +
+      `<span class="cat-total">${totalText}</span></span></div>`;
   }).join('');
 }
 
