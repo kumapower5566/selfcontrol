@@ -199,7 +199,11 @@
     .sprint-task-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: #34303f; font-size: 0.9rem; font-weight: 700; line-height: 1.35; }
     .sprint-ref { padding: 2px 6px; border-radius: 999px; background: #f2eff8; color: #8a8399; font-size: 0.62rem; font-weight: 600; }
     .sprint-task-detail { margin-top: 4px; color: #8f8998; font-size: 0.72rem; line-height: 1.55; }
-    .sprint-task-result { margin-top: 4px; color: #7c3aed; font-size: 0.7rem; font-weight: 600; }
+    .sprint-task-result { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px 8px; margin-top: 5px; color: #7c3aed; font-size: 0.7rem; font-weight: 600; }
+    .sprint-task-result-text { min-width: 0; }
+    .sprint-task-mini-actions { display: flex; gap: 4px; }
+    .sprint-task-mini-actions button { border: none; min-height: 28px; padding: 4px 9px; border-radius: 8px; background: #eee8fa; color: #7c3aed; font-size: 0.68rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .sprint-task-mini-actions button.undo { background: #fff0f5; color: #d84b8a; }
     .sprint-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #d9d5e3; background: #fff; color: transparent; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
     .sprint-task.done .sprint-check { color: #fff; border-color: #7c3aed; background: linear-gradient(135deg, #6d5dfc, #c64fd2); }
     .sprint-day-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 999px; background: #f0ecff; color: #6d5dfc; font-size: 0.68rem; font-weight: 700; }
@@ -223,6 +227,9 @@
     .calendar-legend .legend-sprint { display: block; width: 8px; height: 8px; border-radius: 50%; background: #ec4899; }
     .sprint-pass-modal .modal-title { color: #6d5dfc; }
     .sprint-pass-stars { margin: 2px 0 10px; text-align: center; font-size: 1.8rem; letter-spacing: 4px; }
+    .sprint-duplicate-record { margin: -4px 0 8px; padding: 12px; border-radius: 13px; background: #f8f5ff; color: #665d78; font-size: 0.8rem; line-height: 1.55; text-align: center; }
+    .sprint-duplicate-btns { gap: 6px; }
+    .sprint-duplicate-btns button { padding: 12px 4px; font-size: 0.8rem; }
     /* 统计 */
     .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card .card-title { color: rgba(255,255,255,0.75); }
@@ -629,6 +636,20 @@
       <div class="modal-btns">
         <button class="btn-skip" onclick="closeSprintTimeModal()">取消</button>
         <button class="btn-confirm" onclick="saveSprintTask()">完成打卡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 六级冲刺重复记录提醒 -->
+  <div class="modal-overlay" id="sprintDuplicateModal">
+    <div class="modal">
+      <div class="modal-title" id="sprintDuplicateTitle">今天已有同类记录</div>
+      <div class="modal-sub">避免同一次学习被重复计时</div>
+      <div class="sprint-duplicate-record" id="sprintDuplicateRecord"></div>
+      <div class="modal-btns sprint-duplicate-btns">
+        <button class="btn-skip" onclick="closeSprintDuplicateModal()">取消</button>
+        <button class="btn-skip" onclick="addSprintDuplicateAsNew()">另外新增</button>
+        <button class="btn-confirm" onclick="useSprintDuplicateRecord()">使用已有</button>
       </div>
     </div>
   </div>
@@ -1559,6 +1580,7 @@ window.selectCalendarDate = function(dateStr) {
 
 // ===== 六级冲刺 =====
 let currentSprintAction = null;
+let pendingSprintDuplicateTs = null;
 
 function dateFromLocalString(dateStr) {
   const parts = String(dateStr || '').split('-').map(Number);
@@ -1581,6 +1603,27 @@ function getSprintDayType(dateStr) {
 
 function findSprintRecord(data, dateStr, taskId) {
   return (data.history || []).find(h => h.date === dateStr && h.sprintTask === taskId) || null;
+}
+
+function findSprintRecordIndex(data, dateStr, taskId) {
+  return (data.history || []).findIndex(h => h.date === dateStr && h.sprintTask === taskId);
+}
+
+function findReusableSprintRecord(data, dateStr, sub) {
+  const keyMap = {
+    '单词': 'word_vocab',
+    '阅读': 'word_reading',
+    '听力': 'word_listen',
+    '翻译': 'word_translate',
+    '写作': 'word_write',
+    '复盘': 'word_review',
+    '习题': 'word_exam'
+  };
+  const key = keyMap[sub];
+  if (!key) return null;
+  return (data.history || []).find(h =>
+    h.date === dateStr && !h.sprintTask && !h.sprintExtra && classifyRecordKey(h) === key
+  ) || null;
 }
 
 function isSprintDayPassed(data, dateStr) {
@@ -1611,7 +1654,13 @@ function escapeSprintHtml(value) {
 function sprintTaskCardHtml(task, record) {
   const done = !!record;
   const result = done
-    ? `<div class="sprint-task-result">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟${record.sprintNote ? ' · ' + escapeSprintHtml(record.sprintNote) : ''}</div>`
+    ? `<div class="sprint-task-result">
+        <span class="sprint-task-result-text">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟${record.sprintNote ? ' · ' + escapeSprintHtml(record.sprintNote) : ''}${record.sprintLinked ? ' · 沿用已有记录' : ''}</span>
+        <span class="sprint-task-mini-actions">
+          <button type="button" onclick="editSprintTaskRecord('${task.id}')">编辑</button>
+          <button type="button" class="undo" onclick="undoSprintCompletion('${task.id}')">撤销</button>
+        </span>
+      </div>`
     : '';
   return `<div class="sprint-task ${task.tone || 'review'}${done ? ' done' : ''}${task.bonus ? ' bonus' : ''}" ${done ? '' : `onclick="openSprintTaskModal('${task.id}')"`}>
     <div class="sprint-task-icon">${task.icon || '✓'}</div>
@@ -1623,6 +1672,35 @@ function sprintTaskCardHtml(task, record) {
     <div class="sprint-check">✓</div>
   </div>`;
 }
+
+window.editSprintTaskRecord = function(taskId) {
+  const data = loadData();
+  const idx = findSprintRecordIndex(data, getLocalDateStr(), taskId);
+  if (idx >= 0) editHistoryItem(idx);
+};
+
+window.undoSprintCompletion = function(taskId) {
+  const data = loadData();
+  const today = getLocalDateStr();
+  const idx = findSprintRecordIndex(data, today, taskId);
+  if (idx < 0) return;
+  const record = data.history[idx];
+  if (record.sprintLinked) {
+    if (!window.confirm('取消这次冲刺完成状态吗？原来的打卡时长和备注会保留。')) return;
+    delete record.sprint;
+    delete record.sprintTask;
+    delete record.sprintNote;
+    delete record.sprintLinked;
+    recalcDailyFromTodayHistory(data);
+    cleanupCheckinForDate(data, today);
+    markDataUpdated(data);
+    saveData(data);
+    scheduleAutoSync();
+    refreshAllViews();
+    return;
+  }
+  deleteHistoryItem(idx);
+};
 
 function renderSprintPage() {
   const data = loadData();
@@ -1705,6 +1783,27 @@ function renderSprintExtras(data, today) {
   el.innerHTML = rows.length ? rows.join('') : '<div class="empty-state" style="padding:8px 0">今天还没有额外记录</div>';
 }
 
+function showSprintTimeEntry(action) {
+  setTextIfExists('sprintTimeTitle', `${action.icon || '✓'} ${action.name}`);
+  setTextIfExists('sprintTimeSub', `参考 ${action.minutes || 0} 分钟 · 实际做 1 分钟也算完成`);
+  const input = document.getElementById('sprintTimeMinutes');
+  if (input) input.value = '';
+  const noteInput = document.getElementById('sprintTimeNote');
+  if (noteInput) noteInput.value = '';
+  setTextIfExists('sprintTimeResult', '');
+  document.getElementById('sprintTimeModal').classList.add('show');
+  setTimeout(() => { if (input) input.focus(); }, 120);
+}
+
+function showSprintDuplicatePrompt(action, record) {
+  pendingSprintDuplicateTs = record && record.ts ? record.ts : null;
+  setTextIfExists('sprintDuplicateTitle', `今天已经记录过${action.sub}`);
+  setTextIfExists('sprintDuplicateRecord', `已有记录：${displayHistoryText(record)} · ${Number(record.time) || 0} 分钟\n如果这是同一次学习，选择“使用已有”就不会重复计时。`);
+  const box = document.getElementById('sprintDuplicateRecord');
+  if (box) box.style.whiteSpace = 'pre-line';
+  document.getElementById('sprintDuplicateModal').classList.add('show');
+}
+
 window.openSprintTaskModal = function(taskId) {
   const today = getLocalDateStr();
   const data = loadData();
@@ -1726,20 +1825,62 @@ window.openSprintTaskModal = function(taskId) {
     };
   }
   currentSprintAction = action;
-  setTextIfExists('sprintTimeTitle', `${action.icon || '✓'} ${action.name}`);
-  setTextIfExists('sprintTimeSub', `参考 ${action.minutes || 0} 分钟 · 实际做 1 分钟也算完成`);
-  const input = document.getElementById('sprintTimeMinutes');
-  if (input) input.value = '';
-  const noteInput = document.getElementById('sprintTimeNote');
-  if (noteInput) noteInput.value = '';
-  setTextIfExists('sprintTimeResult', '');
-  document.getElementById('sprintTimeModal').classList.add('show');
-  setTimeout(() => { if (input) input.focus(); }, 120);
+  const duplicate = findReusableSprintRecord(data, today, action.sub);
+  if (duplicate) {
+    showSprintDuplicatePrompt(action, duplicate);
+    return;
+  }
+  showSprintTimeEntry(action);
 };
 
 window.closeSprintTimeModal = function() {
   document.getElementById('sprintTimeModal').classList.remove('show');
   currentSprintAction = null;
+};
+
+window.closeSprintDuplicateModal = function() {
+  document.getElementById('sprintDuplicateModal').classList.remove('show');
+  pendingSprintDuplicateTs = null;
+  currentSprintAction = null;
+};
+
+window.addSprintDuplicateAsNew = function() {
+  const action = currentSprintAction;
+  if (!action) return;
+  document.getElementById('sprintDuplicateModal').classList.remove('show');
+  pendingSprintDuplicateTs = null;
+  showSprintTimeEntry(action);
+};
+
+window.useSprintDuplicateRecord = function() {
+  if (!currentSprintAction || !pendingSprintDuplicateTs) return;
+  const data = loadData();
+  const today = getLocalDateStr();
+  const idx = (data.history || []).findIndex(h => h.date === today && h.ts === pendingSprintDuplicateTs && !h.sprintTask && !h.sprintExtra);
+  if (idx < 0) {
+    closeSprintDuplicateModal();
+    renderSprintPage();
+    return;
+  }
+  const record = data.history[idx];
+  const action = currentSprintAction;
+  const wasPassed = isSprintDayPassed(data, today);
+  record.sprint = true;
+  record.sprintTask = action.id;
+  record.sprintLinked = true;
+  if (!record.sprintNote) record.sprintNote = '';
+  data.dailyFixedDate = today;
+  recalcDailyFromTodayHistory(data);
+  data.checkins[today] = true;
+  markDataUpdated(data);
+  saveData(data);
+  scheduleAutoSync();
+  const isCore = SPRINT_CORE_TASKS.some(task => task.id === action.id);
+  closeSprintDuplicateModal();
+  refreshAllViews();
+  if (isCore && !wasPassed && isSprintDayPassed(data, today)) {
+    document.getElementById('sprintPassModal').classList.add('show');
+  }
 };
 
 window.saveSprintTask = function() {
