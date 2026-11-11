@@ -1054,6 +1054,7 @@ function closeFinishModal(skip) {
 function finishAndSave(minutes, note) {
   const data = loadData();
   const today = getLocalDateStr();
+  const wasSprintPassed = isSprintDayPassed(data, today);
   let taskText = '';
   let completionCat = 'other';
   let completionSub = null;
@@ -1084,7 +1085,9 @@ function finishAndSave(minutes, note) {
   // 加入历史记录
   let historyText = taskText || '专注' + minutes + '分钟';
   if (note) historyText = historyText + ' → ' + note;
-  data.history.unshift({ text: historyText, time: minutes, date: today, ts: Date.now(), cat: completionCat, sub: completionSub });
+  const historyRecord = { text: historyText, time: minutes, date: today, ts: Date.now(), cat: completionCat, sub: completionSub };
+  autoLinkSprintRecord(historyRecord, data, today);
+  data.history.unshift(historyRecord);
   trimHistory(data);
   markDataUpdated(data);
   saveData(data);
@@ -1100,6 +1103,10 @@ function finishAndSave(minutes, note) {
   updateStats();
   renderTaskHistory();
   renderTaskHistory2();
+  renderSprintPage();
+  if (!wasSprintPassed && isSprintDayPassed(data, today)) {
+    document.getElementById('sprintPassModal').classList.add('show');
+  }
   setTimeout(() => { if (!isRunning) timerStatus.textContent = '选择任务，开始专注'; }, 2500);
 }
 
@@ -1626,6 +1633,34 @@ function findReusableSprintRecord(data, dateStr, sub) {
   ) || null;
 }
 
+function autoLinkSprintRecord(record, data, dateStr) {
+  if (!record || !dateStr || dateStr < SPRINT_START_DATE || record.sprintTask || record.sprintExtra || record.sprintAutoLinkExcluded) return false;
+  const key = classifyRecordKey(record);
+  let taskId = null;
+  if (key === 'word_vocab') taskId = 'core_word';
+  else if (key === 'word_reading') taskId = 'core_reading';
+  else if (key === 'word_listen') taskId = 'core_listening';
+  else if (key === 'word_translate' && getSprintDayType(dateStr) === 'A') taskId = 'rotation';
+  else if (key === 'word_write' && getSprintDayType(dateStr) === 'B') taskId = 'rotation';
+  else if (key === 'word_review' && getSprintDayType(dateStr) === 'C') taskId = 'rotation';
+  if (!taskId || findSprintRecord(data, dateStr, taskId)) return false;
+  record.sprint = true;
+  record.sprintTask = taskId;
+  record.sprintLinked = true;
+  record.sprintAutoLinked = true;
+  return true;
+}
+
+function autoLinkTodaySprintRecords(data) {
+  const today = getLocalDateStr();
+  let changed = false;
+  (data.history || []).forEach(record => {
+    if (record.date !== today) return;
+    if (autoLinkSprintRecord(record, data, today)) changed = true;
+  });
+  return changed;
+}
+
 function isSprintDayPassed(data, dateStr) {
   return SPRINT_CORE_TASKS.every(task => !!findSprintRecord(data, dateStr, task.id));
 }
@@ -1655,7 +1690,7 @@ function sprintTaskCardHtml(task, record) {
   const done = !!record;
   const result = done
     ? `<div class="sprint-task-result">
-        <span class="sprint-task-result-text">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟${record.sprintNote ? ' · ' + escapeSprintHtml(record.sprintNote) : ''}${record.sprintLinked ? ' · 沿用已有记录' : ''}</span>
+        <span class="sprint-task-result-text">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟${record.sprintNote ? ' · ' + escapeSprintHtml(record.sprintNote) : ''}${record.sprintLinked && !record.sprintAutoLinked ? ' · 沿用已有记录' : ''}</span>
         <span class="sprint-task-mini-actions">
           <button type="button" onclick="editSprintTaskRecord('${task.id}')">编辑</button>
           <button type="button" class="undo" onclick="undoSprintCompletion('${task.id}')">撤销</button>
@@ -1691,6 +1726,8 @@ window.undoSprintCompletion = function(taskId) {
     delete record.sprintTask;
     delete record.sprintNote;
     delete record.sprintLinked;
+    delete record.sprintAutoLinked;
+    record.sprintAutoLinkExcluded = true;
     recalcDailyFromTodayHistory(data);
     cleanupCheckinForDate(data, today);
     markDataUpdated(data);
@@ -1868,6 +1905,7 @@ window.useSprintDuplicateRecord = function() {
   record.sprint = true;
   record.sprintTask = action.id;
   record.sprintLinked = true;
+  delete record.sprintAutoLinkExcluded;
   if (!record.sprintNote) record.sprintNote = '';
   data.dailyFixedDate = today;
   recalcDailyFromTodayHistory(data);
@@ -2053,6 +2091,11 @@ window.exportDataFile = exportDataFile;
 
 function refreshAllViews() {
   checkDailyReset();
+  const refreshedData = loadData();
+  if (autoLinkTodaySprintRecords(refreshedData)) {
+    markDataUpdated(refreshedData);
+    saveData(refreshedData);
+  }
   updateTimerDisplay();
   updateTimerTaskLabel();
   renderTasks();
@@ -2216,7 +2259,10 @@ window.saveManualCheckin = function() {
   // 吃药一天可能吃多次，不做重复拦截
   const duplicated = cat !== 'med' && data.history.some(h => h.date === dateStr && h.time === minutes && h.text === historyText);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">这条记录已存在，不用重复添加</div>'; return; }
-  data.history.unshift({ text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat, sub });
+  const wasSprintPassed = dateStr === getLocalDateStr() && isSprintDayPassed(data, dateStr);
+  const historyRecord = { text: historyText, time: minutes, date: dateStr, ts: Date.now(), cat, sub };
+  autoLinkSprintRecord(historyRecord, data, dateStr);
+  data.history.unshift(historyRecord);
   trimHistory(data);
   data.checkins[dateStr] = true;
   if (dateStr === getLocalDateStr()) recalcDailyFromTodayHistory(data);
@@ -2230,6 +2276,9 @@ window.saveManualCheckin = function() {
   renderSprintPage();
   document.getElementById('manualModal').classList.remove('show');
   resultEl.innerHTML = '';
+  if (dateStr === getLocalDateStr() && !wasSprintPassed && isSprintDayPassed(data, dateStr)) {
+    document.getElementById('sprintPassModal').classList.add('show');
+  }
 };
 
 // ===== 修改/删除打卡记录 =====
@@ -2414,8 +2463,10 @@ window.saveEditRecord = function() {
   const duplicated = data.history.some((h, i) => i !== idx && h.date === dateStr && h.time === minutes && h.text === text);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">已存在相同记录</div>'; return; }
   const oldDate = data.history[idx].date;
+  const wasSprintPassed = dateStr === getLocalDateStr() && isSprintDayPassed(data, dateStr);
   const updatedRecord = { ...data.history[idx], text, time: minutes, date: dateStr, cat, sub };
   if (updatedRecord.sprintTask) updatedRecord.sprintNote = remark;
+  autoLinkSprintRecord(updatedRecord, data, dateStr);
   data.history[idx] = updatedRecord;
   recalcDailyFromTodayHistory(data);
   cleanupCheckinForDate(data, oldDate);
@@ -2430,6 +2481,9 @@ window.saveEditRecord = function() {
   renderSprintPage();
   document.getElementById('editRecordModal').classList.remove('show');
   editingHistoryIndex = -1;
+  if (dateStr === getLocalDateStr() && !wasSprintPassed && isSprintDayPassed(data, dateStr)) {
+    document.getElementById('sprintPassModal').classList.add('show');
+  }
 };
 window.deleteHistoryItem = function(idx) {
   const data = loadData();
@@ -2778,6 +2832,7 @@ function init() {
   // 清理旧版本可能残留的“无记录绿勾”，让删除结果彻底一致
   const initData = loadData();
   const beforeRecalc = JSON.stringify(initData);
+  autoLinkTodaySprintRecords(initData);
   recalcDailyFromTodayHistory(initData);
   cleanupOrphanCheckins(initData);
   if (JSON.stringify(initData) !== beforeRecalc) {
