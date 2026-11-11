@@ -162,6 +162,67 @@
       .header, .page { max-width: 520px; margin-left: auto; margin-right: auto; }
       .bottom-nav { max-width: 520px; margin: 0 auto; border-left: 1px solid rgba(0,0,0,0.06); border-right: 1px solid rgba(0,0,0,0.06); }
     }
+    /* 六级冲刺 */
+    .sprint-hero { position: relative; overflow: hidden; border-radius: 24px; padding: 20px 20px 18px; margin-bottom: 12px; color: #fff; background: linear-gradient(135deg, #6d5dfc 0%, #9b5de5 58%, #f15bb5 120%); box-shadow: 0 10px 28px rgba(109,93,252,0.24); }
+    .sprint-hero::after { content: ''; position: absolute; width: 132px; height: 132px; border-radius: 50%; right: -42px; top: -56px; background: rgba(255,255,255,0.12); }
+    .sprint-hero-label { position: relative; z-index: 1; font-size: 0.76rem; font-weight: 600; letter-spacing: 1px; color: rgba(255,255,255,0.76); }
+    .sprint-countdown { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 5px; margin-top: 8px; }
+    .sprint-countdown strong { font-size: 2.65rem; line-height: 1; letter-spacing: -1px; }
+    .sprint-countdown span { font-size: 0.88rem; font-weight: 500; }
+    .sprint-exam-date { position: relative; z-index: 1; margin-top: 7px; font-size: 0.75rem; color: rgba(255,255,255,0.76); }
+    .sprint-hero-bottom { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,0.16); }
+    .sprint-hero-bottom span { font-size: 0.78rem; color: rgba(255,255,255,0.8); }
+    .sprint-streak-pill { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 6px 10px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+    .sprint-section-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .sprint-section-title strong { font-size: 1rem; color: #222; }
+    .sprint-section-title span { font-size: 0.72rem; color: #aaa; text-align: right; }
+    .sprint-progress-wrap { margin-bottom: 13px; }
+    .sprint-progress-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #999; margin-bottom: 6px; }
+    .sprint-progress-meta b { color: #6d5dfc; font-size: 0.82rem; }
+    .sprint-progress { height: 9px; border-radius: 999px; background: #efedf8; overflow: hidden; }
+    .sprint-progress-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #6d5dfc, #f15bb5); transition: width 0.45s ease; }
+    .sprint-pass-label { display: none; margin: 10px 0 2px; padding: 10px 12px; border-radius: 13px; text-align: center; font-size: 0.85rem; font-weight: 700; color: #7c3aed; background: linear-gradient(135deg, #f5f0ff, #fff0f7); }
+    .sprint-pass-label.show { display: block; animation: pageIn 0.35s ease; }
+    .sprint-task-list { display: flex; flex-direction: column; gap: 8px; }
+    .sprint-task { display: grid; grid-template-columns: 38px minmax(0,1fr) 28px; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 16px; background: #faf9fc; border: 1px solid #f0eef5; border-left: 4px solid #a78bfa; cursor: pointer; transition: transform 0.15s, background 0.2s; }
+    .sprint-task:active { transform: scale(0.985); }
+    .sprint-task.word { border-left-color: #34a853; background: linear-gradient(90deg, rgba(52,168,83,0.055), #fff 52%); }
+    .sprint-task.reading { border-left-color: #f2994a; background: linear-gradient(90deg, rgba(242,153,74,0.07), #fff 52%); }
+    .sprint-task.listening { border-left-color: #4f8df7; background: linear-gradient(90deg, rgba(79,141,247,0.065), #fff 52%); }
+    .sprint-task.translation { border-left-color: #e85d9e; background: linear-gradient(90deg, rgba(232,93,158,0.06), #fff 52%); }
+    .sprint-task.writing { border-left-color: #b06ad9; background: linear-gradient(90deg, rgba(176,106,217,0.06), #fff 52%); }
+    .sprint-task.review { border-left-color: #20a4a8; background: linear-gradient(90deg, rgba(32,164,168,0.06), #fff 52%); }
+    .sprint-task.bonus { border-left-style: dashed; background: #fbfafc; opacity: 0.92; }
+    .sprint-task.done { background: linear-gradient(135deg, #f2ecff, #fff4fa); border-color: #dfd2ff; }
+    .sprint-task-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; background: #fff; box-shadow: 0 2px 8px rgba(45,35,85,0.06); }
+    .sprint-task-body { min-width: 0; }
+    .sprint-task-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: #34303f; font-size: 0.9rem; font-weight: 700; line-height: 1.35; }
+    .sprint-ref { padding: 2px 6px; border-radius: 999px; background: #f2eff8; color: #8a8399; font-size: 0.62rem; font-weight: 600; }
+    .sprint-task-detail { margin-top: 4px; color: #8f8998; font-size: 0.72rem; line-height: 1.55; }
+    .sprint-task-result { margin-top: 4px; color: #7c3aed; font-size: 0.7rem; font-weight: 600; }
+    .sprint-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #d9d5e3; background: #fff; color: transparent; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
+    .sprint-task.done .sprint-check { color: #fff; border-color: #7c3aed; background: linear-gradient(135deg, #6d5dfc, #c64fd2); }
+    .sprint-day-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 999px; background: #f0ecff; color: #6d5dfc; font-size: 0.68rem; font-weight: 700; }
+    .sprint-rotation-note { margin: -2px 0 12px; padding: 9px 11px; border-radius: 12px; background: #fbf9ff; color: #8d849d; font-size: 0.73rem; line-height: 1.55; }
+    .sprint-extra-form { display: grid; grid-template-columns: 1.2fr 1fr 0.75fr; gap: 7px; margin-bottom: 10px; }
+    .sprint-extra-form input, .sprint-extra-form select { width: 100%; min-width: 0; height: 42px; padding: 0 10px; border: 1.5px solid #ece9f2; border-radius: 12px; background: #fff; font-size: 0.78rem; font-family: inherit; outline: none; color: #444; }
+    .sprint-extra-form input:focus, .sprint-extra-form select:focus { border-color: #a78bfa; }
+    .sprint-extra-submit { grid-column: 1 / -1; height: 42px; border: none; border-radius: 12px; background: linear-gradient(135deg, #6d5dfc, #9b5de5); color: #fff; font-size: 0.82rem; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .sprint-extra-submit:active { transform: scale(0.985); }
+    .sprint-extra-list { display: flex; flex-direction: column; gap: 7px; }
+    .sprint-extra-item { display: flex; align-items: center; gap: 8px; padding: 10px 11px; background: #faf9fc; border-radius: 13px; font-size: 0.8rem; color: #555; }
+    .sprint-extra-item .sprint-extra-main { flex: 1; min-width: 0; line-height: 1.45; }
+    .sprint-extra-item .sprint-extra-main small { display: block; color: #a39dab; font-size: 0.66rem; margin-top: 2px; }
+    .sprint-extra-item .sprint-extra-actions { display: flex; gap: 4px; }
+    .sprint-extra-item button { border: none; background: #f0edf5; color: #8f8899; border-radius: 8px; width: 28px; height: 28px; font-family: inherit; cursor: pointer; }
+    .sprint-extra-item .delete { color: #df6d7c; }
+    .sprint-gap-note { margin-top: 10px; font-size: 0.7rem; line-height: 1.55; color: #aaa; text-align: center; }
+    .history-item.sprint-history .hi-dot { background: #ec4899; }
+    .sprint-calendar-mark { position: absolute; bottom: 2px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: #ff4d9d; box-shadow: 0 0 0 1.5px #fff; }
+    .sprint-calendar-mark.passed { background: #e91e8c; }
+    .calendar-legend .legend-sprint { display: block; width: 8px; height: 8px; border-radius: 50%; background: #ec4899; }
+    .sprint-pass-modal .modal-title { color: #6d5dfc; }
+    .sprint-pass-stars { margin: 2px 0 10px; text-align: center; font-size: 1.8rem; letter-spacing: 4px; }
     /* 统计 */
     .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card .card-title { color: rgba(255,255,255,0.75); }
@@ -311,6 +372,64 @@
     </div>
   </div>
 
+  <!-- 六级冲刺 -->
+  <div class="page" id="page-sprint">
+    <div class="sprint-hero">
+      <div class="sprint-hero-label" id="sprintCountdownLabel">CET-6 · 六级考前冲刺</div>
+      <div class="sprint-countdown"><strong id="sprintDaysLeft">--</strong><span id="sprintDaysUnit">天</span></div>
+      <div class="sprint-exam-date">考试日期：2026 年 12 月 12 日 · 星期六</div>
+      <div class="sprint-hero-bottom">
+        <span id="sprintTodayType">今日基础盘</span>
+        <span class="sprint-streak-pill">🔥 连续通关 <b id="sprintStreak">0</b> 天</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sprint-section-title">
+        <strong>🎯 今日基础盘</strong>
+        <span>三项完成就通关</span>
+      </div>
+      <div class="sprint-progress-wrap">
+        <div class="sprint-progress-meta"><span id="sprintCoreHint">先完成任意一项，今天就算开始了</span><b id="sprintCoreProgress">0 / 3</b></div>
+        <div class="sprint-progress"><div class="sprint-progress-fill" id="sprintCoreFill"></div></div>
+        <div class="sprint-pass-label" id="sprintPassLabel">🎉 今日通关！基础盘已经稳稳拿下</div>
+      </div>
+      <div class="sprint-task-list" id="sprintCoreList"></div>
+      <div class="sprint-gap-note">完成 1 分钟也算通关。每次勾选都会记录实际用时。</div>
+    </div>
+
+    <div class="card">
+      <div class="sprint-section-title">
+        <strong id="sprintRotationTitle">🔄 今日轮换</strong>
+        <span class="sprint-day-badge" id="sprintRotationBadge">Day A</span>
+      </div>
+      <div class="sprint-rotation-note" id="sprintRotationNote"></div>
+      <div class="sprint-task-list" id="sprintRotationList"></div>
+    </div>
+
+    <div class="card">
+      <div class="sprint-section-title">
+        <strong>＋ 额外完成</strong>
+        <span>可记录看课等临时学习</span>
+      </div>
+      <div class="sprint-extra-form">
+        <select id="sprintExtraCat" aria-label="额外任务分类">
+          <option value="单词">单词</option>
+          <option value="阅读">阅读</option>
+          <option value="听力">听力</option>
+          <option value="翻译">翻译</option>
+          <option value="写作">写作</option>
+          <option value="复盘">复盘</option>
+          <option value="习题">习题</option>
+        </select>
+        <input type="text" id="sprintExtraName" maxlength="30" placeholder="备注，如：阅读课" aria-label="额外任务备注">
+        <input type="number" id="sprintExtraMinutes" min="1" max="600" inputmode="numeric" placeholder="分钟" aria-label="额外任务分钟数">
+        <button type="button" class="sprint-extra-submit" onclick="saveSprintExtra()">记录这次学习</button>
+      </div>
+      <div class="sprint-extra-list" id="sprintExtraList"></div>
+    </div>
+  </div>
+
   <!-- 打卡 -->
   <div class="page" id="page-calendar">
     <div class="card">
@@ -327,6 +446,7 @@
       <div class="calendar-legend">
         <span><i class="legend-check"></i>打卡日</span>
         <span><i class="legend-dot"></i>吃药日</span>
+        <span><i class="legend-sprint"></i>六级冲刺</span>
       </div>
       <button class="manual-checkin-btn" id="manualCheckinBtn" onclick="openManualCheckin()">＋ 忘记计时？手动补记</button>
     </div>
@@ -387,6 +507,7 @@
   <!-- 底部导航 -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-page="timer"><span class="nav-icon">⏱️</span><span class="nav-label">专注</span></button>
+    <button class="nav-item" data-page="sprint"><span class="nav-icon">🎯</span><span class="nav-label">冲刺</span></button>
     <button class="nav-item" data-page="stats"><span class="nav-icon">✨</span><span class="nav-label">统计</span></button>
     <button class="nav-item" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">打卡</span></button>
   </nav>
@@ -497,6 +618,32 @@
     </div>
   </div>
 
+  <!-- 六级冲刺实际用时 -->
+  <div class="modal-overlay" id="sprintTimeModal">
+    <div class="modal">
+      <div class="modal-title" id="sprintTimeTitle">记录实际用时</div>
+      <div class="modal-sub" id="sprintTimeSub">参考 15 分钟 · 做 1 分钟也算完成</div>
+      <input type="number" class="sync-input" id="sprintTimeMinutes" min="1" max="600" inputmode="numeric" placeholder="实际用了多少分钟？">
+      <div id="sprintTimeResult"></div>
+      <div class="modal-btns">
+        <button class="btn-skip" onclick="closeSprintTimeModal()">取消</button>
+        <button class="btn-confirm" onclick="saveSprintTask()">完成打卡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 六级冲刺通关提示 -->
+  <div class="modal-overlay sprint-pass-modal" id="sprintPassModal">
+    <div class="modal">
+      <div class="sprint-pass-stars">✨ 🎉 ✨</div>
+      <div class="modal-title">今日通关！</div>
+      <div class="modal-sub">单词、阅读、听力的基础盘已经全部完成。<br>今天的连续通关天数已经更新。</div>
+      <div class="modal-btns">
+        <button class="btn-confirm" onclick="closeSprintPassModal()">继续稳住</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 删除撤销提示 -->
   <div class="undo-toast" id="undoToast">
     <span>已删除 1 条记录</span>
@@ -515,6 +662,33 @@ const DAILY_FIXED = [
 const RATE_MODULES = DAILY_FIXED.filter(f => f.id !== 'med');
 const DATA_KEY = 'focus_clock_data_v5';
 const HISTORY_CAP = 10000; // 本机最多保留的历史记录条数
+const SPRINT_START_DATE = '2026-11-11';
+const SPRINT_EXAM_DATE = '2026-12-12';
+const SPRINT_CORE_TASKS = [
+  { id: 'core_word', name: '单词', icon: '📖', minutes: 15, cat: 'word', sub: '单词', tone: 'word', detail: 'App 复习旧词 + 扫一眼昨天的活页本' },
+  { id: 'core_reading', name: '阅读', icon: '📚', minutes: 20, cat: 'word', sub: '阅读', tone: 'reading', detail: '1 篇仔细阅读：限时 15 分钟 + 5 分钟对答案' },
+  { id: 'core_listening', name: '听力', icon: '🎧', minutes: 10, cat: 'word', sub: '听力', tone: 'listening', detail: '1 个 Section：对答案 + 看错题原文' }
+];
+const SPRINT_ROTATIONS = {
+  A: {
+    title: '翻译突破日', icon: '🟢', tone: 'translation', sub: '翻译',
+    note: '主打积累：不用整篇死磕，先把高频词和最难的句子吃透。',
+    main: { id: 'rotation', name: '翻译积累', minutes: 20, detail: '背 10 个高频词 + 挑 1～2 句最难句自己翻译，再对照答案', bonus: false },
+    bonus: { id: 'bonus', name: '整篇翻译（加分）', minutes: 30, detail: '还有余力时，把整篇翻译题完整写一遍', bonus: true }
+  },
+  B: {
+    title: '写作突破日', icon: '🟡', tone: 'writing', sub: '写作',
+    note: '主打输出：背句型、做提纲，不要求每次都写完整作文。',
+    main: { id: 'rotation', name: '写作积累', minutes: 20, detail: '背 1 个万能开头句 + 1 个万能结尾句，再花 10 分钟列中文提纲', bonus: false },
+    bonus: { id: 'bonus', name: '写出第一段（加分）', minutes: 15, detail: '用刚背的句型，把第一段完整写出来', bonus: true }
+  },
+  C: {
+    title: '休息与复盘日', icon: '🔴', tone: 'review', sub: '复盘',
+    note: '主打查漏补缺：今天不搞新的翻译和写作，稍微轻松一点。',
+    main: { id: 'rotation', name: '复盘与休息', minutes: 20, detail: '重看前两天的阅读、听力错题；朗读活页本笔记；早点睡', bonus: false },
+    bonus: null
+  }
+};
 
 // 获取本地日期字符串（支持时间戳）
 function getLocalDateStr(ts) {
@@ -558,6 +732,7 @@ navItems.forEach(item => {
     }
     if (t === 'calendar') { renderCalendarPage(); renderTaskHistory2(); }
     if (t === 'stats') { updateStats(); }
+    if (t === 'sprint') { renderSprintPage(); }
     if (t === 'timer') { renderTasks(); renderDailyModules(); updateTimerTaskLabel(); }
   });
 });
@@ -632,7 +807,7 @@ let currentPreset = 25, timerStartTime = null, timerInitialSeconds = null;
 let currentTaskIndex = -1;
 let currentDailyId = null; // 当前选择的每日必做ID
 const MODULE_SUBTYPES = {
-  word: ['单词', '习题', '听力'],
+  word: ['单词', '阅读', '听力', '翻译', '写作', '复盘', '习题'],
   exercise: ['大学作业', '设计练习'],
   skill: ['练背', '跳操拉伸']
 };
@@ -1105,7 +1280,12 @@ function renderCalendarPage() {
   const todayStr = getLocalDateStr();
   const data = loadData();
   const medDates = {};
-  (data.history || []).forEach(h => { if (classifyRecordKey(h) === 'med') medDates[h.date] = true; });
+  const sprintDates = {};
+  (data.history || []).forEach(h => {
+    if (!h.date) return;
+    if (classifyRecordKey(h) === 'med') medDates[h.date] = true;
+    if (h.sprint || h.sprintTask || h.sprintExtra) sprintDates[h.date] = true;
+  });
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   document.getElementById('calendarMonth2').textContent = `${year}年 ${month + 1}月`;
@@ -1122,11 +1302,16 @@ function renderCalendarPage() {
     if (isChecked) cls += ' checked';
     const isMed = !!medDates[dateStr];
     if (isMed) cls += ' med';
+    const isSprint = !!sprintDates[dateStr];
+    const isSprintPassed = isSprint && isSprintDayPassed(data, dateStr);
+    if (isSprint) cls += ' sprint';
+    if (isSprintPassed) cls += ' sprint-passed';
     if (isFuture) cls += ' future';
     if (dateStr === selectedCalendarDate) cls += ' selected';
     // 非未来的日期可点击查看当天记录
     const clickAttr = isFuture ? '' : ` onclick="selectCalendarDate('${dateStr}')"`;
-    html += `<div class="${cls}"${clickAttr}${isMed ? ' title="吃药日"' : ''}>${d}</div>`;
+    const titleParts = [isMed ? '吃药日' : '', isSprintPassed ? '六级冲刺通关' : isSprint ? '有六级冲刺记录' : ''].filter(Boolean);
+    html += `<div class="${cls}"${clickAttr}${titleParts.length ? ` title="${titleParts.join(' · ')}"` : ''}>${d}${isSprint ? `<span class="sprint-calendar-mark${isSprintPassed ? ' passed' : ''}"></span>` : ''}</div>`;
   }
   document.getElementById('calendarGrid2').innerHTML = html;
 }
@@ -1200,6 +1385,10 @@ function classifyRecordKey(h) {
   if (h.cat === 'word') {
     if (h.sub === '习题') return 'word_exam';
     if (h.sub === '听力') return 'word_listen';
+    if (h.sub === '阅读') return 'word_reading';
+    if (h.sub === '翻译') return 'word_translate';
+    if (h.sub === '写作') return 'word_write';
+    if (h.sub === '复盘') return 'word_review';
     return 'word_vocab';
   }
   if (h.cat === 'exercise') return h.sub === '设计练习' ? 'exercise_design' : 'exercise_homework';
@@ -1208,6 +1397,10 @@ function classifyRecordKey(h) {
   if (h.cat === 'other') return 'other';
   // 旧记录没有 cat 字段，按文字判断
   if (t.startsWith('英语·习题') || t.includes('英语习题')) return 'word_exam';
+  if (t.startsWith('英语·阅读') || t.includes('阅读课')) return 'word_reading';
+  if (t.startsWith('英语·翻译') || t.includes('翻译课')) return 'word_translate';
+  if (t.startsWith('英语·写作') || t.includes('写作课')) return 'word_write';
+  if (t.startsWith('英语·复盘') || t.includes('复盘')) return 'word_review';
   if (t.includes('听力')) return 'word_listen';
   if (t.includes('复习单词') || t.includes('背新单词') || t.includes('单词')) return 'word_vocab';
   if (t.includes('跳操') || t.includes('拉伸')) return 'skill_cardio';
@@ -1222,8 +1415,12 @@ function classifyRecordKey(h) {
 
 const CATEGORY_META = [
   { key: 'word_vocab', icon: '📖', name: '单词（复习+新词）' },
-  { key: 'word_exam', icon: '📝', name: '英语习题' },
+  { key: 'word_reading', icon: '📚', name: '阅读' },
   { key: 'word_listen', icon: '🎧', name: '听力' },
+  { key: 'word_translate', icon: '🌐', name: '翻译' },
+  { key: 'word_write', icon: '✍️', name: '写作' },
+  { key: 'word_review', icon: '🧠', name: '复盘' },
+  { key: 'word_exam', icon: '📝', name: '英语习题' },
   { key: 'exercise_homework', icon: '📚', name: '大学作业' },
   { key: 'exercise_design', icon: '🎨', name: '设计练习' },
   { key: 'med', icon: '💊', name: '吃药' },
@@ -1232,7 +1429,7 @@ const CATEGORY_META = [
   { key: 'skill_generic', icon: '🏃', name: '运动（未分子类）' },
   { key: 'other', icon: '📌', name: '其他' }
 ];
-const ALWAYS_SHOW_CATS = ['word_vocab', 'word_exam', 'word_listen', 'exercise_homework', 'exercise_design', 'med', 'skill_back', 'skill_cardio'];
+const ALWAYS_SHOW_CATS = ['word_vocab', 'word_reading', 'word_listen', 'word_translate', 'word_write', 'word_review', 'word_exam', 'exercise_homework', 'exercise_design', 'med', 'skill_back', 'skill_cardio'];
 
 function renderCategoryStats(data) {
   const el = document.getElementById('catStats');
@@ -1296,7 +1493,7 @@ function renderTaskHistory() {
     return;
   }
   el.innerHTML = data.history.map((h, idx) => h.date !== today ? '' :
-    `<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
+    `<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
   ).join('');
 }
 function renderDayRecords(dateStr) {
@@ -1314,10 +1511,15 @@ function renderDayRecords(dateStr) {
       : `📝 ${dObj.getMonth()+1}月${dObj.getDate()}日（${weekdays[dObj.getDay()]}）打卡`;
   }
   const checked = !!data.checkins[dateStr];
+  const sprintActivity = (data.history || []).some(h => h.date === dateStr && (h.sprint || h.sprintTask || h.sprintExtra));
+  const sprintPassed = isSprintDayPassed(data, dateStr);
   const hint = document.getElementById('calendarDayHint');
   if (hint) {
-    if (checked) {
-      hint.textContent = '✓ 已打卡';
+    if (sprintPassed) {
+      hint.textContent = '✓ 六级冲刺通关';
+      hint.className = 'calendar-day-hint on';
+    } else if (checked) {
+      hint.textContent = sprintActivity ? '✓ 已打卡 · 六级冲刺进行中' : '✓ 已打卡';
       hint.className = 'calendar-day-hint on';
     } else {
       hint.textContent = '未打卡';
@@ -1327,7 +1529,7 @@ function renderDayRecords(dateStr) {
   const rows = [];
   data.history.forEach((h, idx) => {
     if (h.date !== dateStr) return;
-    rows.push(`<div class="history-item"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
+    rows.push(`<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
   });
   if (rows.length > 0) {
     el.innerHTML = rows.join('');
@@ -1353,6 +1555,273 @@ window.selectCalendarDate = function(dateStr) {
   renderCalendarPage();
   renderDayRecords(dateStr);
 }
+
+// ===== 六级冲刺 =====
+let currentSprintAction = null;
+
+function dateFromLocalString(dateStr) {
+  const parts = String(dateStr || '').split('-').map(Number);
+  if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function daysBetweenLocalDates(fromStr, toStr) {
+  const from = dateFromLocalString(fromStr);
+  const to = dateFromLocalString(toStr);
+  if (!from || !to) return 0;
+  return Math.round((to.getTime() - from.getTime()) / 86400000);
+}
+
+function getSprintDayType(dateStr) {
+  const offset = daysBetweenLocalDates(SPRINT_START_DATE, dateStr);
+  const idx = ((offset % 3) + 3) % 3;
+  return ['A', 'B', 'C'][idx];
+}
+
+function findSprintRecord(data, dateStr, taskId) {
+  return (data.history || []).find(h => h.date === dateStr && h.sprintTask === taskId) || null;
+}
+
+function isSprintDayPassed(data, dateStr) {
+  return SPRINT_CORE_TASKS.every(task => !!findSprintRecord(data, dateStr, task.id));
+}
+
+function calcSprintStreak(data) {
+  const cursor = new Date();
+  const today = getLocalDateStr(cursor.getTime());
+  if (!isSprintDayPassed(data, today)) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (isSprintDayPassed(data, getLocalDateStr(cursor.getTime()))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function escapeSprintHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function sprintTaskCardHtml(task, record) {
+  const done = !!record;
+  const result = done
+    ? `<div class="sprint-task-result">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟</div>`
+    : '';
+  return `<div class="sprint-task ${task.tone || 'review'}${done ? ' done' : ''}${task.bonus ? ' bonus' : ''}" ${done ? '' : `onclick="openSprintTaskModal('${task.id}')"`}>
+    <div class="sprint-task-icon">${task.icon || '✓'}</div>
+    <div class="sprint-task-body">
+      <div class="sprint-task-name">${escapeSprintHtml(task.name)}${task.minutes ? `<span class="sprint-ref">参考 ${task.minutes} 分钟</span>` : ''}</div>
+      ${task.detail ? `<div class="sprint-task-detail">${escapeSprintHtml(task.detail)}</div>` : ''}
+      ${result}
+    </div>
+    <div class="sprint-check">✓</div>
+  </div>`;
+}
+
+function renderSprintPage() {
+  const data = loadData();
+  const today = getLocalDateStr();
+  const daysLeft = daysBetweenLocalDates(today, SPRINT_EXAM_DATE);
+  const countdownLabel = document.getElementById('sprintCountdownLabel');
+  if (countdownLabel) {
+    countdownLabel.textContent = daysLeft > 0 ? '距离六级考试还有' : daysLeft === 0 ? '今天就是六级考试' : '六级考试已经结束';
+  }
+  const daysEl = document.getElementById('sprintDaysLeft');
+  const unitEl = document.getElementById('sprintDaysUnit');
+  if (daysEl) daysEl.textContent = daysLeft >= 0 ? String(daysLeft) : String(Math.abs(daysLeft));
+  if (unitEl) unitEl.textContent = daysLeft >= 0 ? '天' : '天前';
+
+  const dayType = getSprintDayType(today);
+  const rotation = SPRINT_ROTATIONS[dayType];
+  setTextIfExists('sprintTodayType', `今日 Day ${dayType} · ${rotation.title}`);
+  setTextIfExists('sprintStreak', String(calcSprintStreak(data)));
+
+  const coreDone = SPRINT_CORE_TASKS.filter(task => findSprintRecord(data, today, task.id)).length;
+  const coreList = document.getElementById('sprintCoreList');
+  if (coreList) {
+    coreList.innerHTML = SPRINT_CORE_TASKS.map(task => sprintTaskCardHtml(task, findSprintRecord(data, today, task.id))).join('');
+  }
+  setTextIfExists('sprintCoreProgress', `${coreDone} / ${SPRINT_CORE_TASKS.length}`);
+  const fill = document.getElementById('sprintCoreFill');
+  if (fill) fill.style.width = Math.round(coreDone / SPRINT_CORE_TASKS.length * 100) + '%';
+  const passed = coreDone === SPRINT_CORE_TASKS.length;
+  const passLabel = document.getElementById('sprintPassLabel');
+  if (passLabel) passLabel.classList.toggle('show', passed);
+  setTextIfExists('sprintCoreHint', passed ? '基础盘全部完成，今天稳稳通关' : `还差 ${SPRINT_CORE_TASKS.length - coreDone} 项完成基础盘`);
+
+  setTextIfExists('sprintRotationTitle', `${rotation.icon} Day ${dayType} · ${rotation.title}`);
+  setTextIfExists('sprintRotationBadge', `Day ${dayType}`);
+  setTextIfExists('sprintRotationNote', rotation.note);
+  const rotationList = document.getElementById('sprintRotationList');
+  if (rotationList) {
+    const mainTask = {
+      id: rotation.main.id,
+      name: rotation.main.name,
+      icon: dayType === 'A' ? '🌐' : dayType === 'B' ? '✍️' : '🧠',
+      minutes: rotation.main.minutes,
+      detail: rotation.main.detail,
+      tone: rotation.tone,
+      bonus: false
+    };
+    const cards = [sprintTaskCardHtml(mainTask, findSprintRecord(data, today, rotation.main.id))];
+    if (rotation.bonus) {
+      const bonusTask = {
+        id: rotation.bonus.id,
+        name: rotation.bonus.name,
+        icon: '⭐',
+        minutes: rotation.bonus.minutes,
+        detail: rotation.bonus.detail,
+        tone: rotation.tone,
+        bonus: true
+      };
+      cards.push(sprintTaskCardHtml(bonusTask, findSprintRecord(data, today, rotation.bonus.id)));
+    }
+    rotationList.innerHTML = cards.join('');
+  }
+
+  renderSprintExtras(data, today);
+}
+
+function renderSprintExtras(data, today) {
+  const el = document.getElementById('sprintExtraList');
+  if (!el) return;
+  const rows = [];
+  (data.history || []).forEach((h, idx) => {
+    if (h.date !== today || !h.sprintExtra) return;
+    rows.push(`<div class="sprint-extra-item">
+      <div class="sprint-extra-main">${escapeSprintHtml(displayHistoryText(h))}<small>实际 ${Number(h.time) || 0} 分钟</small></div>
+      <div class="sprint-extra-actions">
+        <button type="button" title="修改" onclick="editHistoryItem(${idx})">✎</button>
+        <button type="button" class="delete" title="删除" onclick="deleteHistoryItem(${idx})">×</button>
+      </div>
+    </div>`);
+  });
+  el.innerHTML = rows.length ? rows.join('') : '<div class="empty-state" style="padding:8px 0">今天还没有额外记录</div>';
+}
+
+window.openSprintTaskModal = function(taskId) {
+  const today = getLocalDateStr();
+  const data = loadData();
+  if (findSprintRecord(data, today, taskId)) return;
+
+  let action = SPRINT_CORE_TASKS.find(task => task.id === taskId);
+  if (!action) {
+    const type = getSprintDayType(today);
+    const rotation = SPRINT_ROTATIONS[type];
+    const source = taskId === 'rotation' ? rotation.main : taskId === 'bonus' ? rotation.bonus : null;
+    if (!source) return;
+    action = {
+      id: source.id,
+      name: source.name,
+      icon: taskId === 'bonus' ? '⭐' : type === 'A' ? '🌐' : type === 'B' ? '✍️' : '🧠',
+      minutes: source.minutes,
+      cat: 'word',
+      sub: rotation.sub
+    };
+  }
+  currentSprintAction = action;
+  setTextIfExists('sprintTimeTitle', `${action.icon || '✓'} ${action.name}`);
+  setTextIfExists('sprintTimeSub', `参考 ${action.minutes || 0} 分钟 · 实际做 1 分钟也算完成`);
+  const input = document.getElementById('sprintTimeMinutes');
+  if (input) input.value = '';
+  setTextIfExists('sprintTimeResult', '');
+  document.getElementById('sprintTimeModal').classList.add('show');
+  setTimeout(() => { if (input) input.focus(); }, 120);
+};
+
+window.closeSprintTimeModal = function() {
+  document.getElementById('sprintTimeModal').classList.remove('show');
+  currentSprintAction = null;
+};
+
+window.saveSprintTask = function() {
+  if (!currentSprintAction) return;
+  const input = document.getElementById('sprintTimeMinutes');
+  const minutes = parseInt(input && input.value, 10);
+  const resultEl = document.getElementById('sprintTimeResult');
+  if (isNaN(minutes) || minutes < 1 || minutes > 600) {
+    if (resultEl) resultEl.innerHTML = '<div class="sync-result error">请填写 1～600 分钟</div>';
+    return;
+  }
+  const data = loadData();
+  const today = getLocalDateStr();
+  if (findSprintRecord(data, today, currentSprintAction.id)) {
+    closeSprintTimeModal();
+    renderSprintPage();
+    return;
+  }
+  const wasPassed = isSprintDayPassed(data, today);
+  const suffix = currentSprintAction.id === 'bonus' ? '·加分' : '';
+  data.history.unshift({
+    text: `英语·${currentSprintAction.sub}${suffix}（六级冲刺）`,
+    time: minutes,
+    date: today,
+    ts: Date.now(),
+    cat: 'word',
+    sub: currentSprintAction.sub,
+    sprint: true,
+    sprintTask: currentSprintAction.id
+  });
+  trimHistory(data);
+  data.dailyFixedDate = today;
+  recalcDailyFromTodayHistory(data);
+  data.checkins[today] = true;
+  markDataUpdated(data);
+  saveData(data);
+  scheduleAutoSync();
+  const isCore = SPRINT_CORE_TASKS.some(task => task.id === currentSprintAction.id);
+  closeSprintTimeModal();
+  refreshAllViews();
+  if (isCore && !wasPassed && isSprintDayPassed(data, today)) {
+    document.getElementById('sprintPassModal').classList.add('show');
+  }
+};
+
+window.closeSprintPassModal = function() {
+  document.getElementById('sprintPassModal').classList.remove('show');
+};
+
+window.saveSprintExtra = function() {
+  const catEl = document.getElementById('sprintExtraCat');
+  const nameEl = document.getElementById('sprintExtraName');
+  const minEl = document.getElementById('sprintExtraMinutes');
+  const category = catEl ? catEl.value : '单词';
+  const name = nameEl ? nameEl.value.trim() : '';
+  const minutes = parseInt(minEl && minEl.value, 10);
+  if (isNaN(minutes) || minutes < 1 || minutes > 600) {
+    window.alert('请填写 1～600 分钟');
+    if (minEl) minEl.focus();
+    return;
+  }
+  const data = loadData();
+  const today = getLocalDateStr();
+  const text = `英语·${category}${name ? '（' + name + '）' : ''}（额外）`;
+  data.history.unshift({
+    text,
+    time: minutes,
+    date: today,
+    ts: Date.now(),
+    cat: 'word',
+    sub: category,
+    sprint: true,
+    sprintExtra: true
+  });
+  trimHistory(data);
+  data.dailyFixedDate = today;
+  recalcDailyFromTodayHistory(data);
+  data.checkins[today] = true;
+  markDataUpdated(data);
+  saveData(data);
+  scheduleAutoSync();
+  if (nameEl) nameEl.value = '';
+  if (minEl) minEl.value = '';
+  refreshAllViews();
+};
 
 // ===== 自动备份与未备份提醒 =====
 let syncRemindShown = false;
@@ -1443,6 +1912,7 @@ function refreshAllViews() {
   renderDailyModules();
   renderCalendarPage();
   renderDayRecords(selectedCalendarDate || getLocalDateStr());
+  renderSprintPage();
   updateStats();
 }
 
@@ -1610,6 +2080,7 @@ window.saveManualCheckin = function() {
   renderDailyModules();
   renderCalendarPage();
   renderDayRecords(dateStr);
+  renderSprintPage();
   document.getElementById('manualModal').classList.remove('show');
   resultEl.innerHTML = '';
 };
@@ -1680,6 +2151,10 @@ function inferEditCategory(h) {
   if (key === 'word_vocab') return { cat: '英语', sub: '单词' };
   if (key === 'word_exam') return { cat: '英语', sub: '习题' };
   if (key === 'word_listen') return { cat: '英语', sub: '听力' };
+  if (key === 'word_reading') return { cat: '英语', sub: '阅读' };
+  if (key === 'word_translate') return { cat: '英语', sub: '翻译' };
+  if (key === 'word_write') return { cat: '英语', sub: '写作' };
+  if (key === 'word_review') return { cat: '英语', sub: '复盘' };
   if (key === 'exercise_homework') return { cat: '练习', sub: '大学作业' };
   if (key === 'exercise_design') return { cat: '练习', sub: '设计练习' };
   if (key === 'med') return { cat: '吃药', sub: null };
@@ -1725,7 +2200,7 @@ window.pickEditSub = function(sub, btn) {
 function stripBaseFromTitle(rawText) {
   let t = displayHistoryText({ text: rawText });
   t = t.replace(/\s*（手动）\s*$/, '');
-  const bases = ['英语·复习单词', '英语·背新单词', '英语·单词', '英语·习题', '英语·听力',
+  const bases = ['英语·复习单词', '英语·背新单词', '英语·单词', '英语·阅读', '英语·听力', '英语·翻译', '英语·写作', '英语·复盘', '英语·习题',
     '练习·大学作业', '练习·设计练习',
     '运动·跳操拉伸', '运动·练背', '运动', '英语', '练习'];
   for (const b of bases) {
@@ -1800,6 +2275,7 @@ window.saveEditRecord = function() {
   renderDailyModules();
   renderCalendarPage();
   renderDayRecords(dateStr);
+  renderSprintPage();
   document.getElementById('editRecordModal').classList.remove('show');
   editingHistoryIndex = -1;
 };
@@ -1819,6 +2295,7 @@ window.deleteHistoryItem = function(idx) {
   renderDailyModules();
   renderCalendarPage();
   renderDayRecords(selectedCalendarDate || h.date);
+  renderSprintPage();
   lastDeleted = { record: removedRecord, idx };
   showUndoToast();
 };
@@ -2161,6 +2638,7 @@ function init() {
   renderDailyModules();
   renderCalendarPage();
   renderDayRecords(getLocalDateStr());
+  renderSprintPage();
   updateStats();
   // 打开网站后自动静默同步一次（已配置密钥时）
   setTimeout(autoSyncQuiet, 1200);
