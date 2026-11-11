@@ -624,6 +624,7 @@
       <div class="modal-title" id="sprintTimeTitle">记录实际用时</div>
       <div class="modal-sub" id="sprintTimeSub">参考 15 分钟 · 做 1 分钟也算完成</div>
       <input type="number" class="sync-input" id="sprintTimeMinutes" min="1" max="600" inputmode="numeric" placeholder="实际用了多少分钟？">
+      <input type="text" class="sync-input" id="sprintTimeNote" maxlength="60" placeholder="备注（选填），如：第 2 篇错 3 题">
       <div id="sprintTimeResult"></div>
       <div class="modal-btns">
         <button class="btn-skip" onclick="closeSprintTimeModal()">取消</button>
@@ -1493,7 +1494,7 @@ function renderTaskHistory() {
     return;
   }
   el.innerHTML = data.history.map((h, idx) => h.date !== today ? '' :
-    `<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
+    `<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${escapeSprintHtml(displayHistoryText(h))}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
   ).join('');
 }
 function renderDayRecords(dateStr) {
@@ -1529,7 +1530,7 @@ function renderDayRecords(dateStr) {
   const rows = [];
   data.history.forEach((h, idx) => {
     if (h.date !== dateStr) return;
-    rows.push(`<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${displayHistoryText(h)}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
+    rows.push(`<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${escapeSprintHtml(displayHistoryText(h))}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
   });
   if (rows.length > 0) {
     el.innerHTML = rows.join('');
@@ -1610,7 +1611,7 @@ function escapeSprintHtml(value) {
 function sprintTaskCardHtml(task, record) {
   const done = !!record;
   const result = done
-    ? `<div class="sprint-task-result">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟</div>`
+    ? `<div class="sprint-task-result">✓ 已完成 · 实际 ${Number(record.time) || 0} 分钟${record.sprintNote ? ' · ' + escapeSprintHtml(record.sprintNote) : ''}</div>`
     : '';
   return `<div class="sprint-task ${task.tone || 'review'}${done ? ' done' : ''}${task.bonus ? ' bonus' : ''}" ${done ? '' : `onclick="openSprintTaskModal('${task.id}')"`}>
     <div class="sprint-task-icon">${task.icon || '✓'}</div>
@@ -1729,6 +1730,8 @@ window.openSprintTaskModal = function(taskId) {
   setTextIfExists('sprintTimeSub', `参考 ${action.minutes || 0} 分钟 · 实际做 1 分钟也算完成`);
   const input = document.getElementById('sprintTimeMinutes');
   if (input) input.value = '';
+  const noteInput = document.getElementById('sprintTimeNote');
+  if (noteInput) noteInput.value = '';
   setTextIfExists('sprintTimeResult', '');
   document.getElementById('sprintTimeModal').classList.add('show');
   setTimeout(() => { if (input) input.focus(); }, 120);
@@ -1743,6 +1746,8 @@ window.saveSprintTask = function() {
   if (!currentSprintAction) return;
   const input = document.getElementById('sprintTimeMinutes');
   const minutes = parseInt(input && input.value, 10);
+  const noteInput = document.getElementById('sprintTimeNote');
+  const note = noteInput ? noteInput.value.trim() : '';
   const resultEl = document.getElementById('sprintTimeResult');
   if (isNaN(minutes) || minutes < 1 || minutes > 600) {
     if (resultEl) resultEl.innerHTML = '<div class="sync-result error">请填写 1～600 分钟</div>';
@@ -1758,14 +1763,15 @@ window.saveSprintTask = function() {
   const wasPassed = isSprintDayPassed(data, today);
   const suffix = currentSprintAction.id === 'bonus' ? '·加分' : '';
   data.history.unshift({
-    text: `英语·${currentSprintAction.sub}${suffix}（六级冲刺）`,
+    text: `英语·${currentSprintAction.sub}${suffix}（六级冲刺${note ? '｜' + note : ''}）`,
     time: minutes,
     date: today,
     ts: Date.now(),
     cat: 'word',
     sub: currentSprintAction.sub,
     sprint: true,
-    sprintTask: currentSprintAction.id
+    sprintTask: currentSprintAction.id,
+    sprintNote: note
   });
   trimHistory(data);
   data.dailyFixedDate = today;
@@ -2218,7 +2224,7 @@ window.editHistoryItem = function(idx) {
   editCatVal = inf.cat;
   editSubVal = inf.sub;
   editingOriginalManual = /（手动）$/.test(String(h.text || ''));
-  document.getElementById('recordEditName').value = stripBaseFromTitle(h.text);
+  document.getElementById('recordEditName').value = h.sprintTask ? String(h.sprintNote || '') : stripBaseFromTitle(h.text);
   document.getElementById('recordEditDate').value = h.date || getLocalDateStr();
   document.getElementById('recordEditDate').max = getLocalDateStr();
   document.getElementById('recordEditMinutes').value = h.time || 30;
@@ -2244,7 +2250,7 @@ window.saveEditRecord = function() {
   const isMed = module && module.id === 'med';
   if (!isMed && (isNaN(minutesRaw) || minutesRaw < 1)) { resultEl.innerHTML = '<div class="sync-result error">时长至少 1 分钟</div>'; return; }
   const minutes = isMed ? 0 : Math.min(600, minutesRaw);
-  let text, cat, sub = null;
+  let text, cat, sub = null, sprintBase = '';
   const manualSuffix = editingOriginalManual ? '（手动）' : '';
   if (module) {
     cat = module.id;
@@ -2255,16 +2261,21 @@ window.saveEditRecord = function() {
       sub = editSubVal;
       base = module.text + '·' + editSubVal;
     }
+    sprintBase = base;
     text = base + (remark ? '（' + remark + '）' : '') + manualSuffix;
   } else {
     if (!remark) { resultEl.innerHTML = '<div class="sync-result error">请选择分类或填写项目名称</div>'; return; }
     cat = 'other';
     text = remark + manualSuffix;
   }
+  const wasSprintTask = !!data.history[idx].sprintTask;
+  if (sprintBase && wasSprintTask) text = sprintBase + '（六级冲刺' + (remark ? '｜' + remark : '') + '）';
   const duplicated = data.history.some((h, i) => i !== idx && h.date === dateStr && h.time === minutes && h.text === text);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">已存在相同记录</div>'; return; }
   const oldDate = data.history[idx].date;
-  data.history[idx] = { ...data.history[idx], text, time: minutes, date: dateStr, cat, sub };
+  const updatedRecord = { ...data.history[idx], text, time: minutes, date: dateStr, cat, sub };
+  if (updatedRecord.sprintTask) updatedRecord.sprintNote = remark;
+  data.history[idx] = updatedRecord;
   recalcDailyFromTodayHistory(data);
   cleanupCheckinForDate(data, oldDate);
   data.checkins[dateStr] = true;
