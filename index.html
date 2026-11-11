@@ -126,6 +126,7 @@
     .calendar-day { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; color: #666; position: relative; }
     .calendar-day.today { font-weight: 700; color: #667eea; background: rgba(102, 126, 234, 0.1); }
     .calendar-day.checked { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; }
+    .calendar-day.checked.sprint-passed { background: linear-gradient(135deg, #ff78b7 0%, #e83e8c 100%); box-shadow: 0 7px 18px rgba(232,62,140,0.24); }
     .calendar-day.checked::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(102,126,234,0.35); }
     .calendar-day.selected { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #667eea; }
     .calendar-day.med::before { content: ''; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #4caf50; box-shadow: 0 0 0 2px #fff; }
@@ -133,10 +134,11 @@
     .calendar-day.future { color: #ccc; cursor: not-allowed; }
     .calendar-day-hint { text-align: center; font-size: 0.78rem; color: #999; margin-top: 12px; min-height: 18px; }
     .calendar-day-hint.on { color: #2e7d32; font-weight: 600; }
-    .calendar-legend { display: flex; justify-content: center; gap: 16px; font-size: 0.72rem; color: #999; margin-top: 8px; }
+    .calendar-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; font-size: 0.72rem; color: #999; margin-top: 8px; }
     .calendar-legend span { display: flex; align-items: center; gap: 4px; }
     .calendar-legend .legend-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: #4caf50; }
     .calendar-legend .legend-check { display: block; width: 8px; height: 8px; border-radius: 50%; background: #667eea; }
+    .calendar-legend .legend-sprint-passed { display: block; width: 9px; height: 9px; border-radius: 50%; background: linear-gradient(135deg, #ff78b7, #e83e8c); }
     .manual-checkin-btn { width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
     .manual-checkin-btn:active { transform: scale(0.97); }
     .manual-cat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
@@ -148,6 +150,10 @@
     .day-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid #f0f0f0; background: #fff; font-size: 0.9rem; color: #555; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .day-chip:active { transform: scale(0.96); }
     .day-chip.active { border-color: #fcb69f; background: #fff7f0; color: #d76a35; font-weight: 600; }
+    .manual-sprint-plan { margin: 0 0 12px; padding: 11px 12px; border-radius: 14px; border: 1px solid #f4d8e8; background: linear-gradient(135deg, #fff8fc, #faf7ff); color: #71677a; font-size: 0.73rem; line-height: 1.55; }
+    .manual-sprint-plan strong { display: block; margin-bottom: 4px; color: #bb3f7a; font-size: 0.78rem; }
+    .manual-sprint-plan span, .manual-sprint-plan small { display: block; }
+    .manual-sprint-plan small { margin-top: 4px; color: #a49bab; font-size: 0.68rem; }
     .manual-sub-row, .timer-sub-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
     .timer-sub-row { margin: 0 0 8px; }
     .sub-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 2px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.55); font-size: 0.82rem; color: #6a5a4a; cursor: pointer; font-family: inherit; transition: all 0.15s; }
@@ -224,6 +230,7 @@
     .history-item.sprint-history .hi-dot { background: #ec4899; }
     .sprint-calendar-mark { position: absolute; bottom: 2px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: #ff4d9d; box-shadow: 0 0 0 1.5px #fff; }
     .sprint-calendar-mark.passed { background: #e91e8c; }
+    .calendar-day.sprint-passed .sprint-calendar-mark { display: none; }
     .calendar-legend .legend-sprint { display: block; width: 8px; height: 8px; border-radius: 50%; background: #ec4899; }
     .sprint-pass-modal .modal-title { color: #6d5dfc; }
     .sprint-pass-stars { margin: 2px 0 10px; text-align: center; font-size: 1.8rem; letter-spacing: 4px; }
@@ -278,7 +285,7 @@
     .sync-hint { font-size: 0.78rem; color: #bbb; margin-bottom: 16px; line-height: 1.5; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
     .modal-overlay.show { display: flex; }
-    .modal { background: #fff; border-radius: 24px; padding: 28px 24px; width: 100%; max-width: 360px; animation: modalIn 0.3s ease; }
+    .modal { background: #fff; border-radius: 24px; padding: 28px 24px; width: 100%; max-width: 360px; max-height: calc(100dvh - 32px); overflow-y: auto; -webkit-overflow-scrolling: touch; animation: modalIn 0.3s ease; }
     @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     .modal-title { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; text-align: center; }
     .modal-sub { font-size: 0.85rem; color: #999; text-align: center; margin-bottom: 20px; }
@@ -453,7 +460,8 @@
       <div class="calendar-legend">
         <span><i class="legend-check"></i>打卡日</span>
         <span><i class="legend-dot"></i>吃药日</span>
-        <span><i class="legend-sprint"></i>六级冲刺</span>
+        <span><i class="legend-sprint"></i>冲刺进行中</span>
+        <span><i class="legend-sprint-passed"></i>冲刺通关</span>
       </div>
       <button class="manual-checkin-btn" id="manualCheckinBtn" onclick="openManualCheckin()">＋ 忘记计时？手动补记</button>
     </div>
@@ -566,6 +574,7 @@
         <button type="button" class="day-chip active" id="manualDayTodayBtn" onclick="pickManualDay(0, this)">今天</button>
         <button type="button" class="day-chip" id="manualDayYestBtn" onclick="pickManualDay(-1, this)">昨天</button>
       </div>
+      <div class="manual-sprint-plan" id="manualSprintPlan"></div>
       <input type="date" id="manualDate" style="display:none">
       <input type="number" class="sync-input" id="manualMinutes" min="1" max="600" placeholder="时长（分钟）" inputmode="numeric">
       <div id="manualResult"></div>
@@ -1340,7 +1349,7 @@ function renderCalendarPage() {
     // 非未来的日期可点击查看当天记录
     const clickAttr = isFuture ? '' : ` onclick="selectCalendarDate('${dateStr}')"`;
     const titleParts = [isMed ? '吃药日' : '', isSprintPassed ? '六级冲刺通关' : isSprint ? '有六级冲刺记录' : ''].filter(Boolean);
-    html += `<div class="${cls}"${clickAttr}${titleParts.length ? ` title="${titleParts.join(' · ')}"` : ''}>${d}${isSprint ? `<span class="sprint-calendar-mark${isSprintPassed ? ' passed' : ''}"></span>` : ''}</div>`;
+    html += `<div class="${cls}"${clickAttr}${titleParts.length ? ` title="${titleParts.join(' · ')}"` : ''}>${d}${isSprint && !isSprintPassed ? '<span class="sprint-calendar-mark"></span>' : ''}</div>`;
   }
   document.getElementById('calendarGrid2').innerHTML = html;
 }
@@ -1545,10 +1554,10 @@ function renderDayRecords(dateStr) {
   const hint = document.getElementById('calendarDayHint');
   if (hint) {
     if (sprintPassed) {
-      hint.textContent = '✓ 六级冲刺通关';
+      hint.textContent = '粉色大圈 · 六级冲刺通关';
       hint.className = 'calendar-day-hint on';
     } else if (checked) {
-      hint.textContent = sprintActivity ? '✓ 已打卡 · 六级冲刺进行中' : '✓ 已打卡';
+      hint.textContent = sprintActivity ? '紫色大圈 + 粉色小点 · 六级冲刺进行中' : '✓ 已打卡';
       hint.className = 'calendar-day-hint on';
     } else {
       hint.textContent = '未打卡';
@@ -2161,6 +2170,23 @@ function dateOffsetStr(offsetDays) {
 }
 let manualSubChoice = { word: null, skill: null };
 
+function renderManualSprintPlan(dateStr) {
+  const el = document.getElementById('manualSprintPlan');
+  if (!el) return;
+  const targetLabel = dateStr === getLocalDateStr() ? '今天' : '昨天';
+  if (!dateStr || dateStr < SPRINT_START_DATE) {
+    el.innerHTML = `<strong>${targetLabel}的普通补记</strong><span>每日必做：英语 · 练习 · 运动</span><small>六级冲刺从 11 月 11 日开始，补进更早日期不会生成冲刺标记。</small>`;
+    return;
+  }
+  const dayType = getSprintDayType(dateStr);
+  const rotation = SPRINT_ROTATIONS[dayType];
+  const bonusText = rotation.bonus ? ` · 加分：${rotation.bonus.name}` : '';
+  el.innerHTML = `<strong>${targetLabel}是 Day ${dayType} · ${rotation.title}</strong>` +
+    `<span>基础盘：单词 · 阅读 · 听力</span>` +
+    `<span>轮换：${rotation.main.name}${bonusText}</span>` +
+    `<small>基础盘三项完成才算通关；轮换任务不挡通关。</small>`;
+}
+
 function openManualCheckin() {
   const nameInput = document.getElementById('manualName');
   nameInput.value = '';
@@ -2169,9 +2195,10 @@ function openManualCheckin() {
   const dateEl = document.getElementById('manualDate');
   dateEl.min = dateOffsetStr(-1);
   dateEl.max = getLocalDateStr();
-  dateEl.value = getLocalDateStr();
-  document.getElementById('manualDayTodayBtn').classList.add('active');
-  document.getElementById('manualDayYestBtn').classList.remove('active');
+  const yesterday = dateOffsetStr(-1);
+  dateEl.value = selectedCalendarDate === yesterday ? yesterday : getLocalDateStr();
+  document.getElementById('manualDayTodayBtn').classList.toggle('active', dateEl.value === getLocalDateStr());
+  document.getElementById('manualDayYestBtn').classList.toggle('active', dateEl.value === yesterday);
   document.getElementById('manualMinutes').value = '30';
   document.getElementById('manualMinutes').style.display = '';
   document.getElementById('manualResult').innerHTML = '';
@@ -2183,12 +2210,15 @@ function openManualCheckin() {
   // 默认“其他”：需要填项目名称；点上面三类则下方变成选填备注
   const otherBtn = document.querySelector('#manualCatRow .manual-cat[data-val=""]');
   if (otherBtn) otherBtn.classList.add('active');
+  renderManualSprintPlan(dateEl.value);
   document.getElementById('manualModal').classList.add('show');
 }
 window.pickManualDay = function(offset, btn) {
-  document.getElementById('manualDate').value = dateOffsetStr(offset);
+  const dateStr = dateOffsetStr(offset);
+  document.getElementById('manualDate').value = dateStr;
   document.getElementById('manualDayTodayBtn').classList.toggle('active', offset === 0);
   document.getElementById('manualDayYestBtn').classList.toggle('active', offset === -1);
+  renderManualSprintPlan(dateStr);
 };
 window.pickManualCat = function(text, btn) {
   const cats = document.querySelectorAll('#manualCatRow .manual-cat');
