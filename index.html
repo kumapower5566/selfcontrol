@@ -414,8 +414,8 @@
 
     <div class="card">
       <div class="sprint-section-title">
-        <strong id="sprintRotationTitle">🔄 今日轮换</strong>
-        <span class="sprint-day-badge" id="sprintRotationBadge">Day A</span>
+        <strong id="sprintRotationTitle">🔄 翻译 / 写作轮换</strong>
+        <span class="sprint-day-badge" id="sprintRotationBadge">建议：翻译</span>
       </div>
       <div class="sprint-rotation-note" id="sprintRotationNote"></div>
       <div class="sprint-task-list" id="sprintRotationList"></div>
@@ -424,7 +424,7 @@
     <div class="card">
       <div class="sprint-section-title">
         <strong>＋ 额外完成</strong>
-        <span>可记录看课等临时学习</span>
+        <span>翻译 / 写作课会推进轮换</span>
       </div>
       <div class="sprint-extra-form">
         <select id="sprintExtraCat" aria-label="额外任务分类">
@@ -701,25 +701,16 @@ const SPRINT_CORE_TASKS = [
   { id: 'core_listening', name: '听力', icon: '🎧', minutes: 10, cat: 'word', sub: '听力', tone: 'listening', detail: '1 个 Section：对答案 + 看错题原文' }
 ];
 const SPRINT_ROTATIONS = {
-  A: {
-    title: '翻译突破日', icon: '🟢', tone: 'translation', sub: '翻译',
-    note: '主打积累：不用整篇死磕，先把高频词和最难的句子吃透。',
-    main: { id: 'rotation', name: '翻译积累', minutes: 20, detail: '背 10 个高频词 + 挑 1～2 句最难句自己翻译，再对照答案', bonus: false },
-    bonus: { id: 'bonus', name: '整篇翻译（加分）', minutes: 30, detail: '还有余力时，把整篇翻译题完整写一遍', bonus: true }
+  translation: {
+    label: '翻译', title: '翻译专项', icon: '🌐', tone: 'translation', sub: '翻译',
+    main: { name: '翻译积累', minutes: 20, detail: '背 10 个高频词 + 挑 1～2 句最难句自己翻译，再对照答案' }
   },
-  B: {
-    title: '写作突破日', icon: '🟡', tone: 'writing', sub: '写作',
-    note: '主打输出：背句型、做提纲，不要求每次都写完整作文。',
-    main: { id: 'rotation', name: '写作积累', minutes: 20, detail: '背 1 个万能开头句 + 1 个万能结尾句，再花 10 分钟列中文提纲', bonus: false },
-    bonus: { id: 'bonus', name: '写出第一段（加分）', minutes: 15, detail: '用刚背的句型，把第一段完整写出来', bonus: true }
-  },
-  C: {
-    title: '休息与复盘日', icon: '🔴', tone: 'review', sub: '复盘',
-    note: '主打查漏补缺：今天不搞新的翻译和写作，稍微轻松一点。',
-    main: { id: 'rotation', name: '复盘与休息', minutes: 20, detail: '重看前两天的阅读、听力错题；朗读活页本笔记；早点睡', bonus: false },
-    bonus: null
+  writing: {
+    label: '写作', title: '写作专项', icon: '✍️', tone: 'writing', sub: '写作',
+    main: { name: '写作积累', minutes: 20, detail: '背 1 个万能开头句 + 1 个万能结尾句，再花 10 分钟列中文提纲' }
   }
 };
+const SPRINT_ROTATION_DEFAULT = 'translation';
 
 // 获取本地日期字符串（支持时间戳）
 function getLocalDateStr(ts) {
@@ -1611,10 +1602,70 @@ function daysBetweenLocalDates(fromStr, toStr) {
   return Math.round((to.getTime() - from.getTime()) / 86400000);
 }
 
-function getSprintDayType(dateStr) {
-  const offset = daysBetweenLocalDates(SPRINT_START_DATE, dateStr);
-  const idx = ((offset % 3) + 3) % 3;
-  return ['A', 'B', 'C'][idx];
+function rotationTypeForRecord(record) {
+  const key = classifyRecordKey(record);
+  if (key === 'word_translate') return 'translation';
+  if (key === 'word_write') return 'writing';
+  return null;
+}
+
+function oppositeRotationType(type) {
+  return type === 'writing' ? 'translation' : 'writing';
+}
+
+function rotationTypeFromTaskId(taskId) {
+  if (taskId === 'rotation_translation') return 'translation';
+  if (taskId === 'rotation_writing') return 'writing';
+  return null;
+}
+
+function compareRotationRecords(a, b) {
+  const dateCompare = String(a.date || '').localeCompare(String(b.date || ''));
+  if (dateCompare !== 0) return dateCompare;
+  return (Number(a.ts) || 0) - (Number(b.ts) || 0);
+}
+
+function getRotationRecords(data, dateStr, includeDate) {
+  return (data.history || [])
+    .filter(h => h.date && h.date >= SPRINT_START_DATE && rotationTypeForRecord(h) &&
+      (includeDate ? h.date <= dateStr : h.date < dateStr))
+    .slice()
+    .sort(compareRotationRecords);
+}
+
+function getLatestRotationRecord(data, dateStr, includeDate) {
+  const records = getRotationRecords(data, dateStr, includeDate);
+  return records.length ? records[records.length - 1] : null;
+}
+
+// 当天建议由“当天以前最后一次实际完成”决定：最近做翻译，下一项就是写作。
+function getRotationPlanType(data, dateStr) {
+  const latest = getLatestRotationRecord(data, dateStr, false);
+  return latest ? oppositeRotationType(rotationTypeForRecord(latest)) : SPRINT_ROTATION_DEFAULT;
+}
+
+// 包含当天记录，用于告诉用户做完当前轮换后的下一项。
+function getNextRotationTypeThroughDate(data, dateStr) {
+  const latest = getLatestRotationRecord(data, dateStr, true);
+  return latest ? oppositeRotationType(rotationTypeForRecord(latest)) : SPRINT_ROTATION_DEFAULT;
+}
+
+function getRotationRecordsForType(data, dateStr, type) {
+  return (data.history || [])
+    .filter(h => h.date === dateStr && rotationTypeForRecord(h) === type)
+    .slice()
+    .sort(compareRotationRecords);
+}
+
+function findRotationRecord(data, dateStr, type) {
+  const records = getRotationRecordsForType(data, dateStr, type);
+  return records.length ? records[records.length - 1] : null;
+}
+
+function findRotationRecordIndex(data, dateStr, type) {
+  const target = findRotationRecord(data, dateStr, type);
+  if (!target) return -1;
+  return (data.history || []).findIndex(h => h === target);
 }
 
 function findSprintRecord(data, dateStr, taskId) {
@@ -1647,9 +1698,7 @@ function sprintTaskIdForRecord(record, dateStr) {
   if (key === 'word_vocab') return 'core_word';
   if (key === 'word_reading') return 'core_reading';
   if (key === 'word_listen') return 'core_listening';
-  if (key === 'word_translate' && getSprintDayType(dateStr) === 'A') return 'rotation';
-  if (key === 'word_write' && getSprintDayType(dateStr) === 'B') return 'rotation';
-  if (key === 'word_review' && getSprintDayType(dateStr) === 'C') return 'rotation';
+  if (key === 'word_translate' || key === 'word_write') return 'rotation';
   return null;
 }
 
@@ -1662,6 +1711,9 @@ function autoLinkSprintRecord(record, data, dateStr) {
   if (!record.sprint) { record.sprint = true; changed = true; }
   if (!record.sprintLinked) { record.sprintLinked = true; changed = true; }
   if (!record.sprintAutoLinked) { record.sprintAutoLinked = true; changed = true; }
+  const rotationType = rotationTypeForRecord(record);
+  if (rotationType && !record.sprintRotation) { record.sprintRotation = true; changed = true; }
+  if (rotationType && record.sprintRotationType !== rotationType) { record.sprintRotationType = rotationType; changed = true; }
   if (!findSprintRecord(data, dateStr, taskId)) {
     record.sprintTask = taskId;
     changed = true;
@@ -1728,14 +1780,20 @@ function sprintTaskCardHtml(task, record) {
 
 window.editSprintTaskRecord = function(taskId) {
   const data = loadData();
-  const idx = findSprintRecordIndex(data, getLocalDateStr(), taskId);
+  const rotationType = rotationTypeFromTaskId(taskId);
+  const idx = rotationType
+    ? findRotationRecordIndex(data, getLocalDateStr(), rotationType)
+    : findSprintRecordIndex(data, getLocalDateStr(), taskId);
   if (idx >= 0) editHistoryItem(idx);
 };
 
 window.undoSprintCompletion = function(taskId) {
   const data = loadData();
   const today = getLocalDateStr();
-  const idx = findSprintRecordIndex(data, today, taskId);
+  const rotationType = rotationTypeFromTaskId(taskId);
+  const idx = rotationType
+    ? findRotationRecordIndex(data, today, rotationType)
+    : findSprintRecordIndex(data, today, taskId);
   if (idx < 0) return;
   const record = data.history[idx];
   if (record.sprintLinked) {
@@ -1770,9 +1828,9 @@ function renderSprintPage() {
   if (daysEl) daysEl.textContent = daysLeft >= 0 ? String(daysLeft) : String(Math.abs(daysLeft));
   if (unitEl) unitEl.textContent = daysLeft >= 0 ? '天' : '天前';
 
-  const dayType = getSprintDayType(today);
-  const rotation = SPRINT_ROTATIONS[dayType];
-  setTextIfExists('sprintTodayType', `今日 Day ${dayType} · ${rotation.title}`);
+  const planType = getRotationPlanType(data, today);
+  const rotation = SPRINT_ROTATIONS[planType];
+  setTextIfExists('sprintTodayType', `今日基础盘 · 轮换建议：${rotation.label}`);
   setTextIfExists('sprintStreak', String(calcSprintStreak(data)));
 
   const coreDone = SPRINT_CORE_TASKS.filter(task => findSprintRecord(data, today, task.id)).length;
@@ -1788,34 +1846,37 @@ function renderSprintPage() {
   if (passLabel) passLabel.classList.toggle('show', passed);
   setTextIfExists('sprintCoreHint', passed ? '基础盘全部完成，今天稳稳通关' : `还差 ${SPRINT_CORE_TASKS.length - coreDone} 项完成基础盘`);
 
-  setTextIfExists('sprintRotationTitle', `${rotation.icon} Day ${dayType} · ${rotation.title}`);
-  setTextIfExists('sprintRotationBadge', `Day ${dayType}`);
-  setTextIfExists('sprintRotationNote', rotation.note);
+  const todayRotationRecords = getRotationRecords(data, today, true).filter(h => h.date === today);
+  const todayRotationTypes = new Set(todayRotationRecords.map(rotationTypeForRecord));
+  const latestTodayType = todayRotationRecords.length
+    ? rotationTypeForRecord(todayRotationRecords[todayRotationRecords.length - 1])
+    : null;
+  const nextType = latestTodayType ? oppositeRotationType(latestTodayType) : planType;
+  let rotationNote;
+  if (todayRotationTypes.has('translation') && todayRotationTypes.has('writing')) {
+    rotationNote = `今天的翻译和写作都已完成，下一次从${SPRINT_ROTATIONS[nextType].label}继续。休息由你自己安排。`;
+  } else if (latestTodayType) {
+    rotationNote = `今天已记录${SPRINT_ROTATIONS[latestTodayType].label}，下一次建议${SPRINT_ROTATIONS[nextType].label}。基础盘通关不受影响。`;
+  } else {
+    rotationNote = `按最近实际完成自动轮换，今天建议${rotation.label}。基础盘通关不受影响，累了可以直接休息。`;
+  }
+  rotationNote += ' 翻译课、写作课也算完成，不设强制休息日。';
+
+  setTextIfExists('sprintRotationTitle', '🔄 翻译 / 写作轮换');
+  setTextIfExists('sprintRotationBadge', latestTodayType ? `下一次：${SPRINT_ROTATIONS[nextType].label}` : `建议：${rotation.label}`);
+  setTextIfExists('sprintRotationNote', rotationNote);
   const rotationList = document.getElementById('sprintRotationList');
   if (rotationList) {
     const mainTask = {
-      id: rotation.main.id,
+      id: `rotation_${planType}`,
       name: rotation.main.name,
-      icon: dayType === 'A' ? '🌐' : dayType === 'B' ? '✍️' : '🧠',
+      icon: rotation.icon,
       minutes: rotation.main.minutes,
       detail: rotation.main.detail,
       tone: rotation.tone,
       bonus: false
     };
-    const cards = [sprintTaskCardHtml(mainTask, findSprintRecord(data, today, rotation.main.id))];
-    if (rotation.bonus) {
-      const bonusTask = {
-        id: rotation.bonus.id,
-        name: rotation.bonus.name,
-        icon: '⭐',
-        minutes: rotation.bonus.minutes,
-        detail: rotation.bonus.detail,
-        tone: rotation.tone,
-        bonus: true
-      };
-      cards.push(sprintTaskCardHtml(bonusTask, findSprintRecord(data, today, rotation.bonus.id)));
-    }
-    rotationList.innerHTML = cards.join('');
+    rotationList.innerHTML = sprintTaskCardHtml(mainTask, findRotationRecord(data, today, planType));
   }
 
   renderSprintExtras(data, today);
@@ -1866,17 +1927,18 @@ window.openSprintTaskModal = function(taskId) {
 
   let action = SPRINT_CORE_TASKS.find(task => task.id === taskId);
   if (!action) {
-    const type = getSprintDayType(today);
-    const rotation = SPRINT_ROTATIONS[type];
-    const source = taskId === 'rotation' ? rotation.main : taskId === 'bonus' ? rotation.bonus : null;
+    const rotationType = rotationTypeFromTaskId(taskId) || (taskId === 'rotation' ? getRotationPlanType(data, today) : null);
+    const rotation = rotationType ? SPRINT_ROTATIONS[rotationType] : null;
+    const source = rotation ? rotation.main : null;
     if (!source) return;
     action = {
-      id: source.id,
+      id: `rotation_${rotationType}`,
       name: source.name,
-      icon: taskId === 'bonus' ? '⭐' : type === 'A' ? '🌐' : type === 'B' ? '✍️' : '🧠',
+      icon: rotation.icon,
       minutes: source.minutes,
       cat: 'word',
-      sub: rotation.sub
+      sub: rotation.sub,
+      rotationType
     };
   }
   currentSprintAction = action;
@@ -1923,6 +1985,10 @@ window.useSprintDuplicateRecord = function() {
   record.sprint = true;
   record.sprintTask = action.id;
   record.sprintLinked = true;
+  if (action.rotationType) {
+    record.sprintRotation = true;
+    record.sprintRotationType = action.rotationType;
+  }
   delete record.sprintAutoLinkExcluded;
   if (!record.sprintNote) record.sprintNote = '';
   data.dailyFixedDate = today;
@@ -1958,9 +2024,8 @@ window.saveSprintTask = function() {
     return;
   }
   const wasPassed = isSprintDayPassed(data, today);
-  const suffix = currentSprintAction.id === 'bonus' ? '·加分' : '';
-  data.history.unshift({
-    text: `英语·${currentSprintAction.sub}${suffix}（六级冲刺${note ? '｜' + note : ''}）`,
+  const newRecord = {
+    text: `英语·${currentSprintAction.sub}（六级冲刺${note ? '｜' + note : ''}）`,
     time: minutes,
     date: today,
     ts: Date.now(),
@@ -1969,7 +2034,12 @@ window.saveSprintTask = function() {
     sprint: true,
     sprintTask: currentSprintAction.id,
     sprintNote: note
-  });
+  };
+  if (currentSprintAction.rotationType) {
+    newRecord.sprintRotation = true;
+    newRecord.sprintRotationType = currentSprintAction.rotationType;
+  }
+  data.history.unshift(newRecord);
   trimHistory(data);
   data.dailyFixedDate = today;
   recalcDailyFromTodayHistory(data);
@@ -2004,7 +2074,7 @@ window.saveSprintExtra = function() {
   const data = loadData();
   const today = getLocalDateStr();
   const text = `英语·${category}${name ? '（' + name + '）' : ''}（额外）`;
-  data.history.unshift({
+  const record = {
     text,
     time: minutes,
     date: today,
@@ -2013,7 +2083,14 @@ window.saveSprintExtra = function() {
     sub: category,
     sprint: true,
     sprintExtra: true
-  });
+  };
+  const rotationType = rotationTypeForRecord(record);
+  if (rotationType) {
+    record.sprintTask = 'rotation';
+    record.sprintRotation = true;
+    record.sprintRotationType = rotationType;
+  }
+  data.history.unshift(record);
   trimHistory(data);
   data.dailyFixedDate = today;
   recalcDailyFromTodayHistory(data);
@@ -2178,13 +2255,19 @@ function renderManualSprintPlan(dateStr) {
     el.innerHTML = `<strong>${targetLabel}的普通补记</strong><span>每日必做：英语 · 练习 · 运动</span><small>六级冲刺从 11 月 11 日开始，补进更早日期不会生成冲刺标记。</small>`;
     return;
   }
-  const dayType = getSprintDayType(dateStr);
-  const rotation = SPRINT_ROTATIONS[dayType];
-  const bonusText = rotation.bonus ? ` · 加分：${rotation.bonus.name}` : '';
-  el.innerHTML = `<strong>${targetLabel}是 Day ${dayType} · ${rotation.title}</strong>` +
+  const data = loadData();
+  const planType = getRotationPlanType(data, dateStr);
+  const rotation = SPRINT_ROTATIONS[planType];
+  const completedTypes = new Set(getRotationRecords(data, dateStr, true)
+    .filter(h => h.date === dateStr)
+    .map(rotationTypeForRecord));
+  const completionText = completedTypes.size
+    ? ` · 当天已记录：${[...completedTypes].map(type => SPRINT_ROTATIONS[type].label).join(' / ')}`
+    : '';
+  el.innerHTML = `<strong>${targetLabel} · 轮换建议：${rotation.title}</strong>` +
     `<span>基础盘：单词 · 阅读 · 听力</span>` +
-    `<span>轮换：${rotation.main.name}${bonusText}</span>` +
-    `<small>基础盘三项完成才算通关；轮换任务不挡通关。</small>`;
+    `<span>轮换：${rotation.main.name}${completionText}</span>` +
+    `<small>轮换按实际完成自动交替；基础盘三项完成才算通关。</small>`;
 }
 
 function openManualCheckin() {
