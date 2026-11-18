@@ -253,6 +253,24 @@
     .portfolio-hero-bottom { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,0.14); }
     .portfolio-hero-bottom span { font-size: 0.76rem; color: rgba(255,255,255,0.76); }
     .portfolio-progress-pill { border-radius: 999px; padding: 6px 10px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.14); font-weight: 700; white-space: nowrap; }
+    .portfolio-track-intro { margin: -2px 0 12px; padding: 10px 12px; border-radius: 13px; background: #f5f7fc; color: #777f91; font-size: 0.72rem; line-height: 1.55; }
+    .portfolio-track-grid { display: grid; gap: 10px; }
+    .portfolio-track-card { padding: 14px; }
+    .portfolio-track-card.milk { border-color: #f0dfd8; background: linear-gradient(145deg, #fff9f6, #fff 68%); }
+    .portfolio-track-card.milk::before { background: linear-gradient(#e8a07b, #d77988); }
+    .portfolio-track-card.sleep { border-color: #dce4f8; background: linear-gradient(145deg, #f5f8ff, #fff 68%); }
+    .portfolio-track-card.sleep::before { background: linear-gradient(#385cbe, #7868d8); }
+    .portfolio-track-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .portfolio-track-name { display: flex; align-items: center; gap: 7px; color: #3c4353; font-size: 0.8rem; font-weight: 700; }
+    .portfolio-track-name span { font-size: 1rem; }
+    .portfolio-track-count { padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.78); color: #9297a5; font-size: 0.64rem; font-weight: 700; white-space: nowrap; }
+    .portfolio-track-progress { height: 6px; border-radius: 999px; overflow: hidden; background: #e9edf5; margin-bottom: 11px; }
+    .portfolio-track-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7188c9, #9b83d7); transition: width 0.35s ease; }
+    .portfolio-track-card.milk .portfolio-track-progress i { background: linear-gradient(90deg, #e5a07c, #d9808b); }
+    .portfolio-track-next { color: #252d42; font-size: 0.9rem; font-weight: 700; line-height: 1.5; }
+    .portfolio-track-detail { margin-top: 6px; color: #7a8090; font-size: 0.72rem; line-height: 1.5; }
+    .portfolio-track-card .portfolio-deliverable { margin-top: 9px; }
+    .portfolio-track-card .portfolio-next-action { margin-top: 10px; padding: 9px; }
     .portfolio-next-card { position: relative; overflow: hidden; padding: 16px; border-radius: 18px; border: 1px solid #dfe7fb; background: linear-gradient(145deg, #f6f9ff, #fff 64%); cursor: pointer; transition: transform 0.15s ease; }
     .portfolio-next-card:active { transform: scale(0.985); }
     .portfolio-next-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(#3d6fd7, #8c6ce8); }
@@ -518,16 +536,17 @@
 
       <div class="card">
         <div class="sprint-section-title">
-          <strong>👉 今天只推进一步</strong>
-          <span id="portfolioPhaseLabel">先完成当前里程碑</span>
+          <strong>🔀 双线并行</strong>
+          <span id="portfolioPhaseLabel">两条线独立推进</span>
         </div>
+        <div class="portfolio-track-intro">不用等奶茶完全做完再开始晚栖。今天哪边有精力就先做哪边，想两边各推一点也可以。</div>
         <div id="portfolioNextCard"></div>
-        <div class="portfolio-gap-note">作品集进度独立计算；记录后会同时计入“设计练习”，不会抹掉生活打卡和六级进度。</div>
+        <div class="portfolio-gap-note">两条线分别计算进度；记录后会同时计入“设计练习”，不会抹掉生活打卡和六级进度。</div>
       </div>
 
       <div class="card">
         <div class="sprint-section-title">
-          <strong>🗺️ 作品集路线</strong>
+          <strong>🗺️ 完整路线</strong>
           <span id="portfolioRoadmapMeta">0 / 0 完成</span>
         </div>
         <div class="portfolio-roadmap-progress"><div class="portfolio-roadmap-fill" id="portfolioRoadmapFill"></div></div>
@@ -837,6 +856,7 @@ const PORTFOLIO_PHASES = [
   { id: 'apply', title: '05 集中投递与面试', range: '12.21–12.28' }
 ];
 const PORTFOLIO_MILESTONES = [
+  { id: 'milk_checkout', phase: 'frame', project: '奶茶小程序', title: '补确认订单与支付成功页', detail: '确认订单页核对门店或地址、商品规格、优惠、备注与合计；支付成功页承接订单号和取餐号。', deliverable: '确认订单 + 支付成功两个页面' },
   { id: 'milk_flow', phase: 'frame', project: '奶茶小程序', title: '核对页面清单与核心用户路径', detail: '从点单、选规格、结算到取餐，把已有页面放进一条完整路径。', deliverable: '一页流程图 + 明确缺失页面清单' },
   { id: 'milk_states', phase: 'frame', project: '奶茶小程序', title: '补齐空状态、加载和异常状态', detail: '至少覆盖空购物车、加载中、售罄、下单失败四种情况。', deliverable: '四类状态页或组件示例' },
   { id: 'sleep_flow', phase: 'frame', project: '晚栖睡眠', title: '定下 8 个核心页面与产品闭环', detail: '今晚心情 → 建议 → 睡前仪式 → 播放 → 入睡记录 → 我的。', deliverable: '8 页清单 + 用户路径图' },
@@ -855,6 +875,10 @@ const PORTFOLIO_MILESTONES = [
   { id: 'apply_first', phase: 'launch', project: '投递', title: '准备材料包并投递第一批 5 家', detail: '统一简历、作品集链接、项目说明和打招呼文案。', deliverable: '投递记录表 + 5 次真实投递' },
   { id: 'apply_second', phase: 'apply', project: '投递', title: '优化反馈并投递第二批 5 家', detail: '根据第一批反馈修改简历或项目顺序，再继续投。', deliverable: '至少 10 家总投递记录' },
   { id: 'interview_ready', phase: 'apply', project: '投递', title: '准备作品讲解与面试复盘', detail: '能在 3 分钟内讲清两个项目的目标、取舍和结果。', deliverable: '一版项目讲解稿 + 常见问题答案' }
+];
+const PORTFOLIO_TRACKS = [
+  { id: '奶茶小程序', label: '奶茶收口', icon: '🧋', className: 'milk' },
+  { id: '晚栖睡眠', label: '晚栖推进', icon: '🌙', className: 'sleep' }
 ];
 
 // 获取本地日期字符串（支持时间戳）
@@ -1775,9 +1799,9 @@ function getPortfolioCompletedIds(data) {
     .map(h => h.portfolioMilestone));
 }
 
-function getNextPortfolioMilestone(data) {
+function getNextPortfolioMilestone(data, project) {
   const completed = getPortfolioCompletedIds(data);
-  return PORTFOLIO_MILESTONES.find(item => !completed.has(item.id)) || null;
+  return PORTFOLIO_MILESTONES.find(item => (!project || item.project === project) && !completed.has(item.id)) || null;
 }
 
 function renderPortfolioPage() {
@@ -1788,30 +1812,49 @@ function renderPortfolioPage() {
   const doneCount = completed.size;
   const total = PORTFOLIO_MILESTONES.length;
   const next = getNextPortfolioMilestone(data);
-  const currentPhase = next ? PORTFOLIO_PHASES.find(p => p.id === next.phase) : null;
+  const tracks = PORTFOLIO_TRACKS.map(track => {
+    const items = PORTFOLIO_MILESTONES.filter(item => item.project === track.id);
+    const trackCompleted = items.filter(item => completed.has(item.id)).length;
+    return {
+      ...track,
+      items,
+      completed: trackCompleted,
+      next: getNextPortfolioMilestone(data, track.id)
+    };
+  });
 
   setTextIfExists('portfolioDaysLeft', String(Math.abs(daysLeft)));
   setTextIfExists('portfolioDaysUnit', daysLeft >= 0 ? '天' : '天前');
   setTextIfExists('portfolioDoneCount', String(doneCount));
   setTextIfExists('portfolioTotalCount', String(total));
   setTextIfExists('portfolioRoadmapMeta', `${doneCount} / ${total} 完成`);
-  setTextIfExists('portfolioPhaseLabel', currentPhase ? `${currentPhase.title} · ${currentPhase.range}` : '路线已全部完成');
-  setTextIfExists('portfolioTodayHint', next ? `下一步：${next.project}` : '所有里程碑已完成');
+  setTextIfExists('portfolioPhaseLabel', next ? '两条线独立推进' : '路线已全部完成');
+  setTextIfExists('portfolioTodayHint', next ? '奶茶与晚栖可以同时推进' : '所有里程碑已完成');
   const fill = document.getElementById('portfolioRoadmapFill');
   if (fill) fill.style.width = total ? Math.round(doneCount / total * 100) + '%' : '0%';
 
   const nextCard = document.getElementById('portfolioNextCard');
   if (nextCard) {
     if (next) {
-      nextCard.innerHTML = `<div class="portfolio-next-card" onclick="openPortfolioMilestoneModal('${next.id}')">
-        <div class="portfolio-next-top"><span class="portfolio-next-project">${escapeSprintHtml(next.project)}</span><span class="portfolio-next-step">第 ${String(PORTFOLIO_MILESTONES.indexOf(next) + 1).padStart(2, '0')} 步</span></div>
-        <div class="portfolio-next-title">${escapeSprintHtml(next.title)}</div>
-        <div class="portfolio-next-detail">${escapeSprintHtml(next.detail)}</div>
-        <div class="portfolio-deliverable">做到这里才算完成：${escapeSprintHtml(next.deliverable)}</div>
-        <div class="portfolio-next-action">✓ 完成这个里程碑并记录</div>
-      </div>`;
+      nextCard.className = 'portfolio-track-grid';
+      nextCard.innerHTML = tracks.map(track => {
+        const progress = track.items.length ? Math.round(track.completed / track.items.length * 100) : 0;
+        const nextMarkup = track.next ? `
+          <div class="portfolio-track-next">${escapeSprintHtml(track.next.title)}</div>
+          <div class="portfolio-track-detail">${escapeSprintHtml(track.next.detail)}</div>
+          <div class="portfolio-deliverable">完成标准：${escapeSprintHtml(track.next.deliverable)}</div>
+          <div class="portfolio-next-action">继续这条线并记录</div>` : `
+          <div class="portfolio-track-next">这条线已完成</div>
+          <div class="portfolio-track-detail">之后只需要根据投递反馈继续优化。</div>`;
+        return `<div class="portfolio-next-card portfolio-track-card ${track.className}"${track.next ? ` onclick="openPortfolioMilestoneModal('${track.next.id}')"` : ''}>
+          <div class="portfolio-track-head"><span class="portfolio-track-name"><span>${track.icon}</span>${track.label}</span><span class="portfolio-track-count">${track.completed} / ${track.items.length}</span></div>
+          <div class="portfolio-track-progress"><i style="width:${progress}%"></i></div>
+          ${nextMarkup}
+        </div>`;
+      }).join('');
     } else {
-      nextCard.innerHTML = '<div class="portfolio-empty-complete">🎉 18 个里程碑都完成了。<br>接下来只需要持续投递、记录反馈和准备面试。</div>';
+      nextCard.className = '';
+      nextCard.innerHTML = `<div class="portfolio-empty-complete">🎉 ${total} 个里程碑都完成了。<br>接下来只需要持续投递、记录反馈和准备面试。</div>`;
     }
   }
 
