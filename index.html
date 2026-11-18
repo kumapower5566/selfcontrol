@@ -237,6 +237,61 @@
     .sprint-duplicate-record { margin: -4px 0 8px; padding: 12px; border-radius: 13px; background: #f8f5ff; color: #665d78; font-size: 0.8rem; line-height: 1.55; text-align: center; }
     .sprint-duplicate-btns { gap: 6px; }
     .sprint-duplicate-btns button { padding: 12px 4px; font-size: 0.8rem; }
+    /* 作品集冲刺 */
+    .sprint-mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; margin-bottom: 12px; border-radius: 17px; background: #eeecf6; }
+    .sprint-mode-btn { border: 0; border-radius: 12px; padding: 10px 8px; background: transparent; color: #8f889d; font-family: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
+    .sprint-mode-btn.active { background: #fff; color: #5146d8; box-shadow: 0 3px 12px rgba(76,63,143,0.12); }
+    .sprint-mode-panel { display: none; }
+    .sprint-mode-panel.active { display: block; }
+    .portfolio-hero { position: relative; overflow: hidden; border-radius: 24px; padding: 20px 20px 18px; margin-bottom: 12px; color: #fff; background: radial-gradient(circle at 88% 6%, rgba(127,191,255,0.34), transparent 35%), linear-gradient(135deg, #192b57 0%, #293f79 58%, #4768a8 120%); box-shadow: 0 10px 28px rgba(26,46,89,0.25); }
+    .portfolio-hero::after { content: ''; position: absolute; width: 138px; height: 138px; border-radius: 50%; right: -48px; top: -58px; border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 0 0 22px rgba(255,255,255,0.035), 0 0 0 46px rgba(255,255,255,0.025); }
+    .portfolio-hero-label { position: relative; z-index: 1; font-size: 0.74rem; font-weight: 700; letter-spacing: 1px; color: #c9dcff; }
+    .portfolio-countdown { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 5px; margin-top: 8px; }
+    .portfolio-countdown strong { font-size: 2.65rem; line-height: 1; letter-spacing: -1px; }
+    .portfolio-countdown span { font-size: 0.88rem; color: rgba(255,255,255,0.82); }
+    .portfolio-deadline { position: relative; z-index: 1; margin-top: 7px; font-size: 0.73rem; color: rgba(255,255,255,0.72); line-height: 1.5; }
+    .portfolio-hero-bottom { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,0.14); }
+    .portfolio-hero-bottom span { font-size: 0.76rem; color: rgba(255,255,255,0.76); }
+    .portfolio-progress-pill { border-radius: 999px; padding: 6px 10px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.14); font-weight: 700; white-space: nowrap; }
+    .portfolio-next-card { position: relative; overflow: hidden; padding: 16px; border-radius: 18px; border: 1px solid #dfe7fb; background: linear-gradient(145deg, #f6f9ff, #fff 64%); cursor: pointer; transition: transform 0.15s ease; }
+    .portfolio-next-card:active { transform: scale(0.985); }
+    .portfolio-next-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(#3d6fd7, #8c6ce8); }
+    .portfolio-next-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+    .portfolio-next-project { padding: 4px 8px; border-radius: 999px; background: #eaf0ff; color: #4f67a8; font-size: 0.65rem; font-weight: 700; }
+    .portfolio-next-step { color: #a5a0af; font-size: 0.66rem; }
+    .portfolio-next-title { color: #202d4d; font-size: 0.98rem; font-weight: 700; line-height: 1.45; }
+    .portfolio-next-detail { margin-top: 7px; color: #70788b; font-size: 0.76rem; line-height: 1.6; }
+    .portfolio-deliverable { margin-top: 11px; padding: 9px 10px; border-radius: 12px; background: #eef3ff; color: #536da9; font-size: 0.71rem; line-height: 1.55; }
+    .portfolio-next-action { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; padding: 10px; border-radius: 13px; color: #fff; background: linear-gradient(135deg, #376bd0, #7560dc); font-size: 0.8rem; font-weight: 700; }
+    .portfolio-roadmap-progress { height: 8px; border-radius: 999px; overflow: hidden; background: #e9eef8; margin: 11px 0 14px; }
+    .portfolio-roadmap-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #315fbd, #8a68df); transition: width 0.4s ease; }
+    .portfolio-phase { margin-top: 9px; border: 1px solid #eceaf2; border-radius: 15px; overflow: hidden; background: #fafbfe; }
+    .portfolio-phase[open] { border-color: #e0e6f5; background: #fff; }
+    .portfolio-phase summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 13px; cursor: pointer; font-size: 0.8rem; color: #50576b; font-weight: 700; }
+    .portfolio-phase summary::-webkit-details-marker { display: none; }
+    .portfolio-phase summary small { color: #a29eaa; font-size: 0.65rem; font-weight: 500; }
+    .portfolio-phase-list { display: flex; flex-direction: column; gap: 7px; padding: 0 9px 9px; }
+    .portfolio-milestone { display: grid; grid-template-columns: 28px minmax(0,1fr) 22px; gap: 9px; align-items: center; padding: 10px; border-radius: 13px; border: 1px solid #eceaf1; background: #fbfbfd; cursor: pointer; }
+    .portfolio-milestone.done { border-color: #dbe8df; background: #f4fbf6; cursor: default; }
+    .portfolio-milestone.later { opacity: 0.74; }
+    .portfolio-milestone-index { width: 27px; height: 27px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: #edf1fa; color: #7181a7; font-size: 0.68rem; font-weight: 700; }
+    .portfolio-milestone.done .portfolio-milestone-index { background: #dff3e4; color: #3c8a55; }
+    .portfolio-milestone-title { display: block; color: #4a5061; font-size: 0.78rem; font-weight: 700; line-height: 1.45; }
+    .portfolio-milestone.done .portfolio-milestone-title { color: #63806b; text-decoration: line-through; text-decoration-color: rgba(70,131,87,0.32); }
+    .portfolio-milestone-meta { display: block; margin-top: 3px; color: #aaa6b1; font-size: 0.65rem; line-height: 1.45; }
+    .portfolio-milestone-check { color: #c6c3ca; text-align: center; font-size: 0.9rem; }
+    .portfolio-milestone.done .portfolio-milestone-check { color: #49a065; }
+    .portfolio-empty-complete { padding: 18px; border-radius: 16px; background: linear-gradient(135deg, #eefbf1, #f7fbff); color: #40845a; text-align: center; font-size: 0.85rem; line-height: 1.6; }
+    .portfolio-recent { display: flex; flex-direction: column; gap: 7px; }
+    .portfolio-recent-item { display: flex; align-items: center; gap: 9px; padding: 10px 11px; border-radius: 12px; background: #f8f9fd; font-size: 0.75rem; color: #676d7c; }
+    .portfolio-recent-dot { width: 8px; height: 8px; border-radius: 50%; background: #5c7fd0; flex-shrink: 0; }
+    .portfolio-recent-text { flex: 1; min-width: 0; line-height: 1.45; }
+    .portfolio-recent-meta { display: block; color: #aaa6b1; font-size: 0.63rem; margin-top: 2px; }
+    .portfolio-recent-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .portfolio-recent-actions button { border: 0; width: 28px; height: 28px; border-radius: 8px; background: #eceff7; color: #858b9c; font-family: inherit; cursor: pointer; }
+    .portfolio-recent-actions .delete { color: #d67982; }
+    .portfolio-gap-note { margin-top: 10px; color: #aaa6b1; font-size: 0.68rem; line-height: 1.55; text-align: center; }
+    .history-item.portfolio-history .hi-dot { background: #5c7fd0; }
     /* 统计 */
     .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stats-card .card-title { color: rgba(255,255,255,0.75); }
@@ -386,8 +441,14 @@
     </div>
   </div>
 
-  <!-- 六级冲刺 -->
+  <!-- 冲刺：六级 / 作品集 -->
   <div class="page" id="page-sprint">
+    <div class="sprint-mode-switch" role="tablist" aria-label="冲刺类型">
+      <button type="button" class="sprint-mode-btn active" id="sprintModeExam" onclick="setSprintMode('exam')" role="tab" aria-selected="true">📚 六级冲刺</button>
+      <button type="button" class="sprint-mode-btn" id="sprintModePortfolio" onclick="setSprintMode('portfolio')" role="tab" aria-selected="false">🎨 作品集冲刺</button>
+    </div>
+
+    <div class="sprint-mode-panel active" id="sprintExamPanel">
     <div class="sprint-hero">
       <div class="sprint-hero-label" id="sprintCountdownLabel">CET-6 · 六级考前冲刺</div>
       <div class="sprint-countdown"><strong id="sprintDaysLeft">--</strong><span id="sprintDaysUnit">天</span></div>
@@ -441,6 +502,45 @@
         <button type="button" class="sprint-extra-submit" onclick="saveSprintExtra()">记录这次学习</button>
       </div>
       <div class="sprint-extra-list" id="sprintExtraList"></div>
+    </div>
+    </div>
+
+    <div class="sprint-mode-panel" id="sprintPortfolioPanel">
+      <div class="portfolio-hero">
+        <div class="portfolio-hero-label">UI PORTFOLIO · 实习投递冲刺</div>
+        <div class="portfolio-countdown"><strong id="portfolioDaysLeft">--</strong><span id="portfolioDaysUnit">天</span></div>
+        <div class="portfolio-deadline">目标：2026 年 12 月 28 日（周一）可到岗<br>12 月 27 日是周日，所以按 28 日倒计时</div>
+        <div class="portfolio-hero-bottom">
+          <span id="portfolioTodayHint">今天只推进一步</span>
+          <span class="portfolio-progress-pill">已推进 <b id="portfolioDoneCount">0</b> / <b id="portfolioTotalCount">0</b></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sprint-section-title">
+          <strong>👉 今天只推进一步</strong>
+          <span id="portfolioPhaseLabel">先完成当前里程碑</span>
+        </div>
+        <div id="portfolioNextCard"></div>
+        <div class="portfolio-gap-note">作品集进度独立计算；记录后会同时计入“设计练习”，不会抹掉生活打卡和六级进度。</div>
+      </div>
+
+      <div class="card">
+        <div class="sprint-section-title">
+          <strong>🗺️ 作品集路线</strong>
+          <span id="portfolioRoadmapMeta">0 / 0 完成</span>
+        </div>
+        <div class="portfolio-roadmap-progress"><div class="portfolio-roadmap-fill" id="portfolioRoadmapFill"></div></div>
+        <div id="portfolioRoadmap"></div>
+      </div>
+
+      <div class="card">
+        <div class="sprint-section-title">
+          <strong>🕘 最近推进</strong>
+          <span>可修改或删除</span>
+        </div>
+        <div class="portfolio-recent" id="portfolioRecentList"></div>
+      </div>
     </div>
   </div>
 
@@ -649,6 +749,21 @@
     </div>
   </div>
 
+  <!-- 作品集里程碑实际用时 -->
+  <div class="modal-overlay" id="portfolioMilestoneModal">
+    <div class="modal">
+      <div class="modal-title" id="portfolioModalTitle">推进作品集</div>
+      <div class="modal-sub" id="portfolioModalSub">达到交付物后再完成打卡</div>
+      <input type="number" class="sync-input" id="portfolioMinutes" min="1" max="600" inputmode="numeric" placeholder="这次实际做了多少分钟？">
+      <input type="text" class="sync-input" id="portfolioNote" maxlength="60" placeholder="备注（选填），如：低保真画到播放器">
+      <div id="portfolioSaveResult"></div>
+      <div class="modal-btns">
+        <button class="btn-skip" onclick="closePortfolioMilestoneModal()">取消</button>
+        <button class="btn-confirm" onclick="savePortfolioMilestone()">完成并记录</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 六级冲刺重复记录提醒 -->
   <div class="modal-overlay" id="sprintDuplicateModal">
     <div class="modal">
@@ -711,6 +826,36 @@ const SPRINT_ROTATIONS = {
   }
 };
 const SPRINT_ROTATION_DEFAULT = 'translation';
+const PORTFOLIO_DEADLINE = '2026-12-28';
+const PORTFOLIO_MODE_KEY = 'nengixing_sprint_mode';
+let currentSprintMode = localStorage.getItem(PORTFOLIO_MODE_KEY) === 'portfolio' ? 'portfolio' : 'exam';
+const PORTFOLIO_PHASES = [
+  { id: 'frame', title: '01 收口与框架', range: '11.18–11.24' },
+  { id: 'polish', title: '02 高保真与叙事', range: '11.25–12.04' },
+  { id: 'cet6', title: '03 六级周轻量保温', range: '12.05–12.12' },
+  { id: 'launch', title: '04 上线与第一轮投递', range: '12.13–12.20' },
+  { id: 'apply', title: '05 集中投递与面试', range: '12.21–12.28' }
+];
+const PORTFOLIO_MILESTONES = [
+  { id: 'milk_flow', phase: 'frame', project: '奶茶小程序', title: '核对页面清单与核心用户路径', detail: '从点单、选规格、结算到取餐，把已有页面放进一条完整路径。', deliverable: '一页流程图 + 明确缺失页面清单' },
+  { id: 'milk_states', phase: 'frame', project: '奶茶小程序', title: '补齐空状态、加载和异常状态', detail: '至少覆盖空购物车、加载中、售罄、下单失败四种情况。', deliverable: '四类状态页或组件示例' },
+  { id: 'sleep_flow', phase: 'frame', project: '晚栖睡眠', title: '定下 8 个核心页面与产品闭环', detail: '今晚心情 → 建议 → 睡前仪式 → 播放 → 入睡记录 → 我的。', deliverable: '8 页清单 + 用户路径图' },
+  { id: 'sleep_lofi', phase: 'frame', project: '晚栖睡眠', title: '画完 8 页低保真', detail: '先保证信息层级和流程顺畅，不提前纠结颜色与精修。', deliverable: '8 张可串联的低保真页面' },
+  { id: 'sleep_keyflow', phase: 'frame', project: '晚栖睡眠', title: '串联三个关键交互流程', detail: '完整走通心情选择、睡前仪式、全屏播放器与定时关闭。', deliverable: '3 条可点击或连续展示的流程' },
+  { id: 'case_notes', phase: 'frame', project: '两个项目', title: '整理项目问题与设计决策', detail: '每个项目先写清：解决什么问题、做了什么取舍、为什么这样做。', deliverable: '两个项目的案例要点草稿' },
+  { id: 'sleep_visual', phase: 'polish', project: '晚栖睡眠', title: '建立视觉系统', detail: '确定深夜海军蓝、微光蓝与暖灰，整理字体、间距、圆角和基础组件。', deliverable: '颜色、字体、间距和核心组件规范' },
+  { id: 'sleep_hi3', phase: 'polish', project: '晚栖睡眠', title: '完成 3 个核心页高保真', detail: '优先做今晚默认页、心情选择、全屏播放器。', deliverable: '3 张可进入作品集的完整页面' },
+  { id: 'sleep_hi_all', phase: 'polish', project: '晚栖睡眠', title: '完成其余 5 页与关键状态', detail: '补齐建议、睡前仪式、声音发现、我的和偏好设置。', deliverable: '8 页高保真 + 必要交互状态' },
+  { id: 'milk_components', phase: 'polish', project: '奶茶小程序', title: '统一组件和视觉细节', detail: '收掉尺寸、按钮、卡片、间距和文案不一致的问题。', deliverable: '组件整理前后对照 + 完成版关键页' },
+  { id: 'milk_case', phase: 'polish', project: '奶茶小程序', title: '整理成可展示的项目', detail: '补产品背景、用户路径、关键页面和一条完整下单流程。', deliverable: '项目展示页素材包' },
+  { id: 'portfolio_structure', phase: 'cet6', project: '作品集网站', title: '搭好作品集信息架构', detail: '先定首页、项目详情、个人介绍和联系方式，不追求一次精修。', deliverable: '页面结构与首页草稿' },
+  { id: 'portfolio_story', phase: 'cet6', project: '作品集网站', title: '写出两个项目的故事线', detail: '每个项目按问题、过程、方案、结果组织，临摹只作为视觉练习补充。', deliverable: '两篇项目文案初稿' },
+  { id: 'portfolio_responsive', phase: 'launch', project: '作品集网站', title: '完成响应式与上线检查', detail: '先手机端，再桌面端；检查断点、图片、加载和链接。', deliverable: '可公开访问的作品集网址' },
+  { id: 'resume_page', phase: 'launch', project: '作品集网站', title: '完成简历网页', detail: '真实写清每周可投入时间、可实习周期和现有工具能力。', deliverable: '一页简历 + PDF 版本' },
+  { id: 'apply_first', phase: 'launch', project: '投递', title: '准备材料包并投递第一批 5 家', detail: '统一简历、作品集链接、项目说明和打招呼文案。', deliverable: '投递记录表 + 5 次真实投递' },
+  { id: 'apply_second', phase: 'apply', project: '投递', title: '优化反馈并投递第二批 5 家', detail: '根据第一批反馈修改简历或项目顺序，再继续投。', deliverable: '至少 10 家总投递记录' },
+  { id: 'interview_ready', phase: 'apply', project: '投递', title: '准备作品讲解与面试复盘', detail: '能在 3 分钟内讲清两个项目的目标、取舍和结果。', deliverable: '一版项目讲解稿 + 常见问题答案' }
+];
 
 // 获取本地日期字符串（支持时间戳）
 function getLocalDateStr(ts) {
@@ -1522,7 +1667,7 @@ function renderTaskHistory() {
     return;
   }
   el.innerHTML = data.history.map((h, idx) => h.date !== today ? '' :
-    `<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${escapeSprintHtml(displayHistoryText(h))}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
+    `<div class="history-item${h.sprint ? ' sprint-history' : ''}${h.portfolio ? ' portfolio-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${escapeSprintHtml(displayHistoryText(h))}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`
   ).join('');
 }
 function renderDayRecords(dateStr) {
@@ -1541,6 +1686,7 @@ function renderDayRecords(dateStr) {
   }
   const checked = !!data.checkins[dateStr];
   const sprintActivity = (data.history || []).some(h => h.date === dateStr && (h.sprint || h.sprintTask || h.sprintExtra));
+  const portfolioActivity = (data.history || []).some(h => h.date === dateStr && h.portfolioMilestone);
   const sprintPassed = isSprintDayPassed(data, dateStr);
   const hint = document.getElementById('calendarDayHint');
   if (hint) {
@@ -1548,7 +1694,7 @@ function renderDayRecords(dateStr) {
       hint.textContent = '粉色大圈 · 六级冲刺通关';
       hint.className = 'calendar-day-hint on';
     } else if (checked) {
-      hint.textContent = sprintActivity ? '紫色大圈 + 粉色小点 · 六级冲刺进行中' : '✓ 已打卡';
+      hint.textContent = sprintActivity ? '紫色大圈 + 粉色小点 · 六级冲刺进行中' : portfolioActivity ? '✓ 已打卡 · 含作品集推进' : '✓ 已打卡';
       hint.className = 'calendar-day-hint on';
     } else {
       hint.textContent = '未打卡';
@@ -1558,7 +1704,7 @@ function renderDayRecords(dateStr) {
   const rows = [];
   data.history.forEach((h, idx) => {
     if (h.date !== dateStr) return;
-    rows.push(`<div class="history-item${h.sprint ? ' sprint-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${escapeSprintHtml(displayHistoryText(h))}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
+    rows.push(`<div class="history-item${h.sprint ? ' sprint-history' : ''}${h.portfolio ? ' portfolio-history' : ''}"><span class="hi-dot"></span><span class="hi-text">${escapeSprintHtml(displayHistoryText(h))}</span><span class="hi-time">${formatHistoryTime(h)}</span><span class="history-actions"><button onclick="editHistoryItem(${idx})" title="修改">✎</button><button class="act-del" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span></div>`);
   });
   if (rows.length > 0) {
     el.innerHTML = rows.join('');
@@ -1588,6 +1734,195 @@ window.selectCalendarDate = function(dateStr) {
 // ===== 六级冲刺 =====
 let currentSprintAction = null;
 let pendingSprintDuplicateTs = null;
+let currentPortfolioMilestoneId = null;
+
+function applySprintModeUI() {
+  const isPortfolio = currentSprintMode === 'portfolio';
+  const examPanel = document.getElementById('sprintExamPanel');
+  const portfolioPanel = document.getElementById('sprintPortfolioPanel');
+  const examBtn = document.getElementById('sprintModeExam');
+  const portfolioBtn = document.getElementById('sprintModePortfolio');
+  if (examPanel) examPanel.classList.toggle('active', !isPortfolio);
+  if (portfolioPanel) portfolioPanel.classList.toggle('active', isPortfolio);
+  if (examBtn) {
+    examBtn.classList.toggle('active', !isPortfolio);
+    examBtn.setAttribute('aria-selected', String(!isPortfolio));
+  }
+  if (portfolioBtn) {
+    portfolioBtn.classList.toggle('active', isPortfolio);
+    portfolioBtn.setAttribute('aria-selected', String(isPortfolio));
+  }
+}
+
+window.setSprintMode = function(mode) {
+  currentSprintMode = mode === 'portfolio' ? 'portfolio' : 'exam';
+  localStorage.setItem(PORTFOLIO_MODE_KEY, currentSprintMode);
+  applySprintModeUI();
+  if (currentSprintMode === 'portfolio') renderPortfolioPage();
+};
+
+function portfolioMilestoneById(id) {
+  return PORTFOLIO_MILESTONES.find(item => item.id === id) || null;
+}
+
+function findPortfolioMilestoneRecord(data, milestoneId) {
+  return (data.history || []).find(h => h && h.portfolioMilestone === milestoneId) || null;
+}
+
+function getPortfolioCompletedIds(data) {
+  return new Set((data.history || [])
+    .filter(h => h && portfolioMilestoneById(h.portfolioMilestone))
+    .map(h => h.portfolioMilestone));
+}
+
+function getNextPortfolioMilestone(data) {
+  const completed = getPortfolioCompletedIds(data);
+  return PORTFOLIO_MILESTONES.find(item => !completed.has(item.id)) || null;
+}
+
+function renderPortfolioPage() {
+  const data = loadData();
+  const today = getLocalDateStr();
+  const daysLeft = daysBetweenLocalDates(today, PORTFOLIO_DEADLINE);
+  const completed = getPortfolioCompletedIds(data);
+  const doneCount = completed.size;
+  const total = PORTFOLIO_MILESTONES.length;
+  const next = getNextPortfolioMilestone(data);
+  const currentPhase = next ? PORTFOLIO_PHASES.find(p => p.id === next.phase) : null;
+
+  setTextIfExists('portfolioDaysLeft', String(Math.abs(daysLeft)));
+  setTextIfExists('portfolioDaysUnit', daysLeft >= 0 ? '天' : '天前');
+  setTextIfExists('portfolioDoneCount', String(doneCount));
+  setTextIfExists('portfolioTotalCount', String(total));
+  setTextIfExists('portfolioRoadmapMeta', `${doneCount} / ${total} 完成`);
+  setTextIfExists('portfolioPhaseLabel', currentPhase ? `${currentPhase.title} · ${currentPhase.range}` : '路线已全部完成');
+  setTextIfExists('portfolioTodayHint', next ? `下一步：${next.project}` : '所有里程碑已完成');
+  const fill = document.getElementById('portfolioRoadmapFill');
+  if (fill) fill.style.width = total ? Math.round(doneCount / total * 100) + '%' : '0%';
+
+  const nextCard = document.getElementById('portfolioNextCard');
+  if (nextCard) {
+    if (next) {
+      nextCard.innerHTML = `<div class="portfolio-next-card" onclick="openPortfolioMilestoneModal('${next.id}')">
+        <div class="portfolio-next-top"><span class="portfolio-next-project">${escapeSprintHtml(next.project)}</span><span class="portfolio-next-step">第 ${String(PORTFOLIO_MILESTONES.indexOf(next) + 1).padStart(2, '0')} 步</span></div>
+        <div class="portfolio-next-title">${escapeSprintHtml(next.title)}</div>
+        <div class="portfolio-next-detail">${escapeSprintHtml(next.detail)}</div>
+        <div class="portfolio-deliverable">做到这里才算完成：${escapeSprintHtml(next.deliverable)}</div>
+        <div class="portfolio-next-action">✓ 完成这个里程碑并记录</div>
+      </div>`;
+    } else {
+      nextCard.innerHTML = '<div class="portfolio-empty-complete">🎉 18 个里程碑都完成了。<br>接下来只需要持续投递、记录反馈和准备面试。</div>';
+    }
+  }
+
+  const roadmap = document.getElementById('portfolioRoadmap');
+  if (roadmap) {
+    roadmap.innerHTML = PORTFOLIO_PHASES.map(phase => {
+      const items = PORTFOLIO_MILESTONES.filter(item => item.phase === phase.id);
+      const phaseDone = items.filter(item => completed.has(item.id)).length;
+      const isOpen = next ? phase.id === next.phase : false;
+      return `<details class="portfolio-phase"${isOpen ? ' open' : ''}>
+        <summary><span>${escapeSprintHtml(phase.title)}</span><small>${phase.range} · ${phaseDone}/${items.length}</small></summary>
+        <div class="portfolio-phase-list">${items.map(item => {
+          const idx = PORTFOLIO_MILESTONES.indexOf(item) + 1;
+          const done = completed.has(item.id);
+          return `<div class="portfolio-milestone${done ? ' done' : ''}" ${done ? '' : `onclick="openPortfolioMilestoneModal('${item.id}')"`}>
+            <span class="portfolio-milestone-index">${done ? '✓' : String(idx).padStart(2, '0')}</span>
+            <span><span class="portfolio-milestone-title">${escapeSprintHtml(item.title)}</span><span class="portfolio-milestone-meta">${escapeSprintHtml(item.project)} · ${escapeSprintHtml(item.deliverable)}</span></span>
+            <span class="portfolio-milestone-check">${done ? '✓' : '›'}</span>
+          </div>`;
+        }).join('')}</div>
+      </details>`;
+    }).join('');
+  }
+
+  const recentEl = document.getElementById('portfolioRecentList');
+  if (recentEl) {
+    const recent = (data.history || [])
+      .map((h, idx) => ({ h, idx }))
+      .filter(item => item.h && item.h.portfolioMilestone)
+      .sort((a, b) => (Number(b.h.ts) || 0) - (Number(a.h.ts) || 0))
+      .slice(0, 6);
+    if (!recent.length) {
+      recentEl.innerHTML = '<div class="empty-state">还没有作品集记录。完成上面的“下一步”就会出现在这里。</div>';
+    } else {
+      recentEl.innerHTML = recent.map(({ h, idx }) => `<div class="portfolio-recent-item">
+        <span class="portfolio-recent-dot"></span>
+        <span class="portfolio-recent-text">${escapeSprintHtml(displayHistoryText(h))}<span class="portfolio-recent-meta">${h.date || ''} · ${Number(h.time) || 0} 分钟${h.portfolioNote ? ' · ' + escapeSprintHtml(h.portfolioNote) : ''}</span></span>
+        <span class="portfolio-recent-actions"><button type="button" onclick="editHistoryItem(${idx})" title="修改">✎</button><button type="button" class="delete" onclick="deleteHistoryItem(${idx})" title="删除">✕</button></span>
+      </div>`).join('');
+    }
+  }
+
+  applySprintModeUI();
+}
+
+window.openPortfolioMilestoneModal = function(milestoneId) {
+  const milestone = portfolioMilestoneById(milestoneId);
+  if (!milestone) return;
+  const data = loadData();
+  if (findPortfolioMilestoneRecord(data, milestoneId)) return;
+  currentPortfolioMilestoneId = milestoneId;
+  setTextIfExists('portfolioModalTitle', `${milestone.project} · ${milestone.title}`);
+  setTextIfExists('portfolioModalSub', `完成标准：${milestone.deliverable}`);
+  const minutesEl = document.getElementById('portfolioMinutes');
+  const noteEl = document.getElementById('portfolioNote');
+  if (minutesEl) minutesEl.value = '';
+  if (noteEl) noteEl.value = '';
+  const resultEl = document.getElementById('portfolioSaveResult');
+  if (resultEl) resultEl.innerHTML = '';
+  document.getElementById('portfolioMilestoneModal').classList.add('show');
+  if (minutesEl) setTimeout(() => minutesEl.focus(), 80);
+};
+
+window.closePortfolioMilestoneModal = function() {
+  document.getElementById('portfolioMilestoneModal').classList.remove('show');
+  currentPortfolioMilestoneId = null;
+};
+
+window.savePortfolioMilestone = function() {
+  const milestone = portfolioMilestoneById(currentPortfolioMilestoneId);
+  if (!milestone) return;
+  const minutesEl = document.getElementById('portfolioMinutes');
+  const noteEl = document.getElementById('portfolioNote');
+  const resultEl = document.getElementById('portfolioSaveResult');
+  const minutes = parseInt(minutesEl && minutesEl.value, 10);
+  const note = noteEl ? noteEl.value.trim() : '';
+  if (isNaN(minutes) || minutes < 1 || minutes > 600) {
+    if (resultEl) resultEl.innerHTML = '<div class="sync-result error">请填写 1～600 分钟</div>';
+    return;
+  }
+  const data = loadData();
+  if (findPortfolioMilestoneRecord(data, milestone.id)) {
+    closePortfolioMilestoneModal();
+    renderPortfolioPage();
+    return;
+  }
+  const today = getLocalDateStr();
+  const record = {
+    text: `练习·设计练习（作品集｜${milestone.project}｜${milestone.title}${note ? '｜' + note : ''}）`,
+    time: minutes,
+    date: today,
+    ts: Date.now(),
+    cat: 'exercise',
+    sub: '设计练习',
+    portfolio: true,
+    portfolioMilestone: milestone.id,
+    portfolioPhase: milestone.phase,
+    portfolioProject: milestone.project,
+    portfolioNote: note
+  };
+  data.history.unshift(record);
+  trimHistory(data);
+  data.dailyFixedDate = today;
+  recalcDailyFromTodayHistory(data);
+  data.checkins[today] = true;
+  markDataUpdated(data);
+  saveData(data);
+  scheduleAutoSync();
+  closePortfolioMilestoneModal();
+  refreshAllViews();
+};
 
 function dateFromLocalString(dateStr) {
   const parts = String(dateStr || '').split('-').map(Number);
@@ -1880,6 +2215,7 @@ function renderSprintPage() {
   }
 
   renderSprintExtras(data, today);
+  renderPortfolioPage();
 }
 
 function renderSprintExtras(data, today) {
@@ -2536,7 +2872,11 @@ window.editHistoryItem = function(idx) {
   editCatVal = inf.cat;
   editSubVal = inf.sub;
   editingOriginalManual = /（手动）$/.test(String(h.text || ''));
-  document.getElementById('recordEditName').value = h.sprintTask ? String(h.sprintNote || '') : stripBaseFromTitle(h.text);
+  document.getElementById('recordEditName').value = h.sprintTask
+    ? String(h.sprintNote || '')
+    : h.portfolioMilestone
+      ? String(h.portfolioNote || '')
+      : stripBaseFromTitle(h.text);
   document.getElementById('recordEditDate').value = h.date || getLocalDateStr();
   document.getElementById('recordEditDate').max = getLocalDateStr();
   document.getElementById('recordEditMinutes').value = h.time || 30;
@@ -2580,14 +2920,32 @@ window.saveEditRecord = function() {
     cat = 'other';
     text = remark + manualSuffix;
   }
-  const wasSprintTask = !!data.history[idx].sprintTask;
+  const originalRecord = data.history[idx];
+  const wasSprintTask = !!originalRecord.sprintTask;
   if (sprintBase && wasSprintTask) text = sprintBase + '（六级冲刺' + (remark ? '｜' + remark : '') + '）';
+  const portfolioMilestone = portfolioMilestoneById(originalRecord.portfolioMilestone);
+  if (originalRecord.portfolioMilestone) {
+    if (portfolioMilestone && cat === 'exercise' && sub === '设计练习') {
+      text = '练习·设计练习（作品集｜' + portfolioMilestone.project + '｜' + portfolioMilestone.title + (remark ? '｜' + remark : '') + '）';
+    }
+  }
   const duplicated = data.history.some((h, i) => i !== idx && h.date === dateStr && h.time === minutes && h.text === text);
   if (duplicated) { resultEl.innerHTML = '<div class="sync-result error">已存在相同记录</div>'; return; }
   const oldDate = data.history[idx].date;
   const wasSprintPassed = dateStr === getLocalDateStr() && isSprintDayPassed(data, dateStr);
   const updatedRecord = { ...data.history[idx], text, time: minutes, date: dateStr, cat, sub };
   if (updatedRecord.sprintTask) updatedRecord.sprintNote = remark;
+  if (originalRecord.portfolioMilestone) {
+    if (portfolioMilestone && cat === 'exercise' && sub === '设计练习') {
+      updatedRecord.portfolioNote = remark;
+    } else {
+      delete updatedRecord.portfolio;
+      delete updatedRecord.portfolioMilestone;
+      delete updatedRecord.portfolioPhase;
+      delete updatedRecord.portfolioProject;
+      delete updatedRecord.portfolioNote;
+    }
+  }
   autoLinkSprintRecord(updatedRecord, data, dateStr);
   data.history[idx] = updatedRecord;
   recalcDailyFromTodayHistory(data);
