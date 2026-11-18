@@ -260,6 +260,8 @@
     .portfolio-track-card.milk::before { background: linear-gradient(#e8a07b, #d77988); }
     .portfolio-track-card.sleep { border-color: #dce4f8; background: linear-gradient(145deg, #f5f8ff, #fff 68%); }
     .portfolio-track-card.sleep::before { background: linear-gradient(#385cbe, #7868d8); }
+    .portfolio-track-card.shared { border-color: #dfe4ee; background: linear-gradient(145deg, #f8fafc, #fff 68%); }
+    .portfolio-track-card.shared::before { background: linear-gradient(#6f7f9a, #475a7a); }
     .portfolio-track-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
     .portfolio-track-name { display: flex; align-items: center; gap: 7px; color: #3c4353; font-size: 0.8rem; font-weight: 700; }
     .portfolio-track-name span { font-size: 1rem; }
@@ -267,6 +269,7 @@
     .portfolio-track-progress { height: 6px; border-radius: 999px; overflow: hidden; background: #e9edf5; margin-bottom: 11px; }
     .portfolio-track-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7188c9, #9b83d7); transition: width 0.35s ease; }
     .portfolio-track-card.milk .portfolio-track-progress i { background: linear-gradient(90deg, #e5a07c, #d9808b); }
+    .portfolio-track-card.shared .portfolio-track-progress i { background: linear-gradient(90deg, #788aa6, #4d6385); }
     .portfolio-track-next { color: #252d42; font-size: 0.9rem; font-weight: 700; line-height: 1.5; }
     .portfolio-track-detail { margin-top: 6px; color: #7a8090; font-size: 0.72rem; line-height: 1.5; }
     .portfolio-track-card .portfolio-deliverable { margin-top: 9px; }
@@ -536,12 +539,12 @@
 
       <div class="card">
         <div class="sprint-section-title">
-          <strong>🔀 双线并行</strong>
-          <span id="portfolioPhaseLabel">两条线独立推进</span>
+          <strong>🧭 三条进度</strong>
+          <span id="portfolioPhaseLabel">合计就是总进度</span>
         </div>
-        <div class="portfolio-track-intro">不用等奶茶完全做完再开始晚栖。今天哪边有精力就先做哪边，想两边各推一点也可以。</div>
+        <div class="portfolio-track-intro">奶茶和晚栖各自推进；作品集网站、案例、简历与投递统一放进共同上线。5 + 6 + 8 = 19，三组合计就是上方总进度。</div>
         <div id="portfolioNextCard"></div>
-        <div class="portfolio-gap-note">两条线分别计算进度；记录后会同时计入“设计练习”，不会抹掉生活打卡和六级进度。</div>
+        <div class="portfolio-gap-note">三组分别计算进度；记录后会同时计入“设计练习”，不会抹掉生活打卡和六级进度。</div>
       </div>
 
       <div class="card">
@@ -878,8 +881,10 @@ const PORTFOLIO_MILESTONES = [
 ];
 const PORTFOLIO_TRACKS = [
   { id: '奶茶小程序', label: '奶茶收口', icon: '🧋', className: 'milk' },
-  { id: '晚栖睡眠', label: '晚栖推进', icon: '🌙', className: 'sleep' }
+  { id: '晚栖睡眠', label: '晚栖推进', icon: '🌙', className: 'sleep' },
+  { id: '__shared__', label: '共同上线', icon: '🚀', className: 'shared' }
 ];
+const PORTFOLIO_PROJECTS = ['奶茶小程序', '晚栖睡眠'];
 
 // 获取本地日期字符串（支持时间戳）
 function getLocalDateStr(ts) {
@@ -1801,7 +1806,12 @@ function getPortfolioCompletedIds(data) {
 
 function getNextPortfolioMilestone(data, project) {
   const completed = getPortfolioCompletedIds(data);
-  return PORTFOLIO_MILESTONES.find(item => (!project || item.project === project) && !completed.has(item.id)) || null;
+  return PORTFOLIO_MILESTONES.find(item => {
+    if (completed.has(item.id)) return false;
+    if (!project) return true;
+    if (project === '__shared__') return !PORTFOLIO_PROJECTS.includes(item.project);
+    return item.project === project;
+  }) || null;
 }
 
 function renderPortfolioPage() {
@@ -1813,7 +1823,9 @@ function renderPortfolioPage() {
   const total = PORTFOLIO_MILESTONES.length;
   const next = getNextPortfolioMilestone(data);
   const tracks = PORTFOLIO_TRACKS.map(track => {
-    const items = PORTFOLIO_MILESTONES.filter(item => item.project === track.id);
+    const items = PORTFOLIO_MILESTONES.filter(item => track.id === '__shared__'
+      ? !PORTFOLIO_PROJECTS.includes(item.project)
+      : item.project === track.id);
     const trackCompleted = items.filter(item => completed.has(item.id)).length;
     return {
       ...track,
@@ -1828,8 +1840,8 @@ function renderPortfolioPage() {
   setTextIfExists('portfolioDoneCount', String(doneCount));
   setTextIfExists('portfolioTotalCount', String(total));
   setTextIfExists('portfolioRoadmapMeta', `${doneCount} / ${total} 完成`);
-  setTextIfExists('portfolioPhaseLabel', next ? '两条线独立推进' : '路线已全部完成');
-  setTextIfExists('portfolioTodayHint', next ? '奶茶与晚栖可以同时推进' : '所有里程碑已完成');
+  setTextIfExists('portfolioPhaseLabel', next ? '合计就是总进度' : '路线已全部完成');
+  setTextIfExists('portfolioTodayHint', next ? '奶茶、晚栖与共同上线' : '所有里程碑已完成');
   const fill = document.getElementById('portfolioRoadmapFill');
   if (fill) fill.style.width = total ? Math.round(doneCount / total * 100) + '%' : '0%';
 
