@@ -204,6 +204,7 @@
     .sprint-task-body { min-width: 0; }
     .sprint-task-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: #34303f; font-size: 0.9rem; font-weight: 700; line-height: 1.35; }
     .sprint-ref { padding: 2px 6px; border-radius: 999px; background: #f2eff8; color: #8a8399; font-size: 0.62rem; font-weight: 600; }
+    .sprint-focus-tag { padding: 2px 6px; border-radius: 999px; background: #fff0e6; color: #c56a24; font-size: 0.62rem; font-weight: 700; }
     .sprint-task-detail { margin-top: 4px; color: #8f8998; font-size: 0.72rem; line-height: 1.55; }
     .sprint-task-result { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px 8px; margin-top: 5px; color: #7c3aed; font-size: 0.7rem; font-weight: 600; }
     .sprint-task-result-text { min-width: 0; }
@@ -483,15 +484,15 @@
     <div class="card">
       <div class="sprint-section-title">
         <strong>🎯 今日基础盘</strong>
-        <span>三项完成就通关</span>
+        <span>单词 + 阅读/听力二选一</span>
       </div>
       <div class="sprint-progress-wrap">
-        <div class="sprint-progress-meta"><span id="sprintCoreHint">先完成任意一项，今天就算开始了</span><b id="sprintCoreProgress">0 / 3</b></div>
+        <div class="sprint-progress-meta"><span id="sprintCoreHint">单词 + 一项阅读或听力，今天就算开始了</span><b id="sprintCoreProgress">0 / 2</b></div>
         <div class="sprint-progress"><div class="sprint-progress-fill" id="sprintCoreFill"></div></div>
-        <div class="sprint-pass-label" id="sprintPassLabel">🎉 今日通关！基础盘已经稳稳拿下</div>
+        <div class="sprint-pass-label" id="sprintPassLabel">🎉 今日通关！单词和轮换任务已经完成</div>
       </div>
       <div class="sprint-task-list" id="sprintCoreList"></div>
-      <div class="sprint-gap-note">完成 1 分钟也算通关。每次勾选都会记录实际用时。</div>
+      <div class="sprint-gap-note">阅读和听力按实际完成交替；另一项可作为额外练习。完成 1 分钟也算通关。</div>
     </div>
 
     <div class="card">
@@ -805,7 +806,7 @@
     <div class="modal">
       <div class="sprint-pass-stars">✨ 🎉 ✨</div>
       <div class="modal-title">今日通关！</div>
-      <div class="modal-sub">单词、阅读、听力的基础盘已经全部完成。<br>今天的连续通关天数已经更新。</div>
+      <div class="modal-sub">单词和今天轮换的阅读/听力已经完成。<br>今天的连续通关天数已经更新。</div>
       <div class="modal-btns">
         <button class="btn-confirm" onclick="closeSprintPassModal()">继续稳住</button>
       </div>
@@ -837,6 +838,9 @@ const SPRINT_CORE_TASKS = [
   { id: 'core_reading', name: '阅读', icon: '📚', minutes: 20, cat: 'word', sub: '阅读', tone: 'reading', detail: '1 篇仔细阅读：限时 15 分钟 + 5 分钟对答案' },
   { id: 'core_listening', name: '听力', icon: '🎧', minutes: 10, cat: 'word', sub: '听力', tone: 'listening', detail: '1 个 Section：对答案 + 看错题原文' }
 ];
+const SPRINT_FIXED_TASK_ID = 'core_word';
+const SPRINT_FOCUS_TASK_IDS = ['core_reading', 'core_listening'];
+const SPRINT_FOCUS_DEFAULT = 'core_reading';
 const SPRINT_ROTATIONS = {
   translation: {
     label: '翻译', title: '翻译专项', icon: '🌐', tone: 'translation', sub: '翻译',
@@ -2083,6 +2087,29 @@ function findReusableSprintRecord(data, dateStr, sub) {
   ) || null;
 }
 
+function focusTaskIdForRecord(record) {
+  const key = classifyRecordKey(record);
+  if (key === 'word_reading') return 'core_reading';
+  if (key === 'word_listen') return 'core_listening';
+  return null;
+}
+
+function getFocusPlanTaskId(data, dateStr) {
+  const latest = (data.history || [])
+    .filter(h => h.date && h.date < dateStr && focusTaskIdForRecord(h))
+    .slice()
+    .sort(compareRotationRecords)
+    .pop();
+  if (!latest) return SPRINT_FOCUS_DEFAULT;
+  return focusTaskIdForRecord(latest) === 'core_reading' ? 'core_listening' : 'core_reading';
+}
+
+function getSprintCoreProgress(data, dateStr) {
+  const fixedDone = !!findSprintRecord(data, dateStr, SPRINT_FIXED_TASK_ID);
+  const completedFocusTasks = SPRINT_FOCUS_TASK_IDS.filter(taskId => !!findSprintRecord(data, dateStr, taskId));
+  return { fixedDone, completedFocusTasks, done: (fixedDone ? 1 : 0) + (completedFocusTasks.length ? 1 : 0) };
+}
+
 function sprintTaskIdForRecord(record, dateStr) {
   const key = classifyRecordKey(record);
   if (key === 'word_vocab') return 'core_word';
@@ -2122,7 +2149,8 @@ function autoLinkExistingSprintRecords(data) {
 }
 
 function isSprintDayPassed(data, dateStr) {
-  return SPRINT_CORE_TASKS.every(task => !!findSprintRecord(data, dateStr, task.id));
+  const progress = getSprintCoreProgress(data, dateStr);
+  return progress.fixedDone && progress.completedFocusTasks.length > 0;
 }
 
 function calcSprintStreak(data) {
@@ -2160,7 +2188,7 @@ function sprintTaskCardHtml(task, record) {
   return `<div class="sprint-task ${task.tone || 'review'}${done ? ' done' : ''}${task.bonus ? ' bonus' : ''}" ${done ? '' : `onclick="openSprintTaskModal('${task.id}')"`}>
     <div class="sprint-task-icon">${task.icon || '✓'}</div>
     <div class="sprint-task-body">
-      <div class="sprint-task-name">${escapeSprintHtml(task.name)}${task.minutes ? `<span class="sprint-ref">参考 ${task.minutes} 分钟</span>` : ''}</div>
+      <div class="sprint-task-name">${escapeSprintHtml(task.name)}${task.tag ? `<span class="sprint-focus-tag">${escapeSprintHtml(task.tag)}</span>` : ''}${task.minutes ? `<span class="sprint-ref">参考 ${task.minutes} 分钟</span>` : ''}</div>
       ${task.detail ? `<div class="sprint-task-detail">${escapeSprintHtml(task.detail)}</div>` : ''}
       ${result}
     </div>
@@ -2220,21 +2248,41 @@ function renderSprintPage() {
 
   const planType = getRotationPlanType(data, today);
   const rotation = SPRINT_ROTATIONS[planType];
-  setTextIfExists('sprintTodayType', `今日基础盘 · 轮换建议：${rotation.label}`);
+  const focusPlanTaskId = getFocusPlanTaskId(data, today);
+  const focusPlanTask = SPRINT_CORE_TASKS.find(task => task.id === focusPlanTaskId);
+  setTextIfExists('sprintTodayType', `今日基础盘 · 单词 + ${focusPlanTask ? focusPlanTask.name : '阅读/听力'}（轮换）`);
   setTextIfExists('sprintStreak', String(calcSprintStreak(data)));
 
-  const coreDone = SPRINT_CORE_TASKS.filter(task => findSprintRecord(data, today, task.id)).length;
+  const coreProgress = getSprintCoreProgress(data, today);
+  const visibleCoreTaskIds = [SPRINT_FIXED_TASK_ID, ...(coreProgress.completedFocusTasks.length ? coreProgress.completedFocusTasks : [focusPlanTaskId])];
   const coreList = document.getElementById('sprintCoreList');
   if (coreList) {
-    coreList.innerHTML = SPRINT_CORE_TASKS.map(task => sprintTaskCardHtml(task, findSprintRecord(data, today, task.id))).join('');
+    coreList.innerHTML = visibleCoreTaskIds.map(taskId => {
+      const task = SPRINT_CORE_TASKS.find(item => item.id === taskId);
+      if (!task) return '';
+      return sprintTaskCardHtml({
+        ...task,
+        tag: taskId === focusPlanTaskId ? '今日轮换' : ''
+      }, findSprintRecord(data, today, task.id));
+    }).join('');
   }
-  setTextIfExists('sprintCoreProgress', `${coreDone} / ${SPRINT_CORE_TASKS.length}`);
+  setTextIfExists('sprintCoreProgress', `${coreProgress.done} / 2`);
   const fill = document.getElementById('sprintCoreFill');
-  if (fill) fill.style.width = Math.round(coreDone / SPRINT_CORE_TASKS.length * 100) + '%';
-  const passed = coreDone === SPRINT_CORE_TASKS.length;
+  if (fill) fill.style.width = Math.round(coreProgress.done / 2 * 100) + '%';
+  const passed = coreProgress.done === 2;
   const passLabel = document.getElementById('sprintPassLabel');
   if (passLabel) passLabel.classList.toggle('show', passed);
-  setTextIfExists('sprintCoreHint', passed ? '基础盘全部完成，今天稳稳通关' : `还差 ${SPRINT_CORE_TASKS.length - coreDone} 项完成基础盘`);
+  let coreHint;
+  if (passed) {
+    coreHint = '单词和阅读/听力轮换已完成，今天稳稳通关';
+  } else if (!coreProgress.fixedDone && !coreProgress.completedFocusTasks.length) {
+    coreHint = '还差单词，以及阅读/听力中的任意一项';
+  } else if (!coreProgress.fixedDone) {
+    coreHint = '还差单词，完成就通关';
+  } else {
+    coreHint = `再完成${focusPlanTask ? focusPlanTask.name : '阅读或听力'}，今天通关`;
+  }
+  setTextIfExists('sprintCoreHint', coreHint);
 
   const todayRotationRecords = getRotationRecords(data, today, true).filter(h => h.date === today);
   const todayRotationTypes = new Set(todayRotationRecords.map(rotationTypeForRecord));
@@ -2649,16 +2697,18 @@ function renderManualSprintPlan(dateStr) {
   const data = loadData();
   const planType = getRotationPlanType(data, dateStr);
   const rotation = SPRINT_ROTATIONS[planType];
+  const focusTaskId = getFocusPlanTaskId(data, dateStr);
+  const focusTask = SPRINT_CORE_TASKS.find(task => task.id === focusTaskId);
   const completedTypes = new Set(getRotationRecords(data, dateStr, true)
     .filter(h => h.date === dateStr)
     .map(rotationTypeForRecord));
   const completionText = completedTypes.size
     ? ` · 当天已记录：${[...completedTypes].map(type => SPRINT_ROTATIONS[type].label).join(' / ')}`
     : '';
-  el.innerHTML = `<strong>${targetLabel} · 轮换建议：${rotation.title}</strong>` +
-    `<span>基础盘：单词 · 阅读 · 听力</span>` +
+  el.innerHTML = `<strong>${targetLabel} · 翻译/写作建议：${rotation.title}</strong>` +
+    `<span>基础盘：单词 + ${focusTask ? focusTask.name : '阅读/听力'}二选一</span>` +
     `<span>轮换：${rotation.main.name}${completionText}</span>` +
-    `<small>轮换按实际完成自动交替；基础盘三项完成才算通关。</small>`;
+    `<small>阅读、听力按实际完成交替；单词和其中任意一项完成就算通关。</small>`;
 }
 
 function openManualCheckin() {
